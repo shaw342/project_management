@@ -1,11 +1,11 @@
-import TextReveal from "@/components/magicui/text-reveal";
+import React from 'react';
 
-export default function Home() {
+const HomePage: React.FC = () => {
   return (
-    <main>
-      <div className="z-10 flex min-h-[16rem] items-center justify-center rounded-lg border bg-white dark:bg-black">
-      <TextReveal text="Magic UI will change the way you design." />
+    <div>
+      <h1>Welcome to the Home Page</h1>
     </div>
-    </main>
-      );
-}
+  );
+};
+
+export default HomePage;

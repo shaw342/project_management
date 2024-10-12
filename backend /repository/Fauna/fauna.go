@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -63,7 +64,7 @@ func CreateUser(ctx *gin.Context) {
 	}
 
 	var Id = GetId(scout.FirstName,client)
-	CreatCredential(Id,scout.FirstName)
+	CreatCredential(Id,scout.Password)
 	ctx.JSON(201, scout)
 	
 }
@@ -368,6 +369,7 @@ func Login(ctx *gin.Context){
 
 	}
 
+
 	token := jwt.NewWithClaims(jwt.SigningMethodES256,jwt.MapClaims{
 		"Issuer":result.Id,
 		"exp": time.Now().Add(time.Hour * 1).Unix(), 
@@ -379,10 +381,54 @@ func Login(ctx *gin.Context){
 		panic(err)
 	}
 
+	loginUser,err:= loginUser(result.Email,result.Password)
+
+	if err != nil{
+		panic(err)
+	}
+	
+	fmt.Print(loginUser)
+	
 	ctx.SetCookie("jwt_token",tokenString,3600,"/Page/api/main","localhost",false,true)
 	
 
 	ctx.JSON(http.StatusOK,gin.H{"token":tokenString})
 
+}
+
+func loginUser(email string,password string) (*fauna.QuerySuccess,error){
+
+	client := NewFaunaClient()
+	query,err := fauna.FQL("User.byEmail(${email}).first()",map[string]any{"email":email})
+
+	if err != nil{
+		log.Fatal("error for get User in login User")
+	}
+	res,err := client.Query(query)
+
+	if err != nil{
+		log.Fatal("error to run query: loginUser")
+	}
+
+	var user model.User
+
+	if err := res.Unmarshal(&user); err != nil{
+		log.Fatal("error to Unmarshal user")
+	}
+
+	login,err := fauna.FQL(`Credentials.byDocument(${user})?.login(${password})`,map[string]any{"user":user,"password":password})
+
+	if err != nil{
+		panic(err)
+	}
+
+	loginRes,err := client.Query(login)
+
+	if err != nil{
+		panic(err)
+	}
+
+	return loginRes, err
+	
 }
 

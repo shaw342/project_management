@@ -11,7 +11,8 @@ export default function SignInForm() {
     firstName: '',
     lastName: '',
     email: '',
-    password: ''
+    password: '',
+    confimPassword:''
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,6 +88,22 @@ export default function SignInForm() {
           </div>
           <div className="space-y-2 mt-4">
             <Label htmlFor="password">Mot de passe</Label>
+            <div className="relative">
+              <Lock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                value={user.password}
+                onChange={handleChange}
+                className="pl-8"
+                required
+              />
+            </div>
+          </div>
+          <div className="space-y-2 mt-4">
+            <Label htmlFor="password">Validate Mot de passe</Label>
             <div className="relative">
               <Lock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input

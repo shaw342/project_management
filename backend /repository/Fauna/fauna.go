@@ -40,6 +40,12 @@ func CreateUser(ctx *gin.Context) {
 		ctx.JSON(404, ctx.Errors)
 		return
 	}
+
+	if user.FirstName == " " || user.LastName == " " || user.Email == "" || user.Password == ""{
+		fmt.Print(user)
+		log.Fatal("all field is not completed")
+	}
+
 	user.Id = uuid.NewString()
 	hashPassword,err := bcrypt.GenerateFromPassword([]byte(user.Password),14)
 
@@ -61,6 +67,11 @@ func CreateUser(ctx *gin.Context) {
 
 	if err := res.Unmarshal(&scout); err != nil {
 		panic(err)
+	}
+	if scout.FirstName == " " || scout.LastName == " " || scout.Email == "" || scout.Password == ""{
+
+		fmt.Print(user)
+		log.Fatal("all field is not completed")
 	}
 
 	var Id = GetId(scout.FirstName,client)
@@ -381,13 +392,6 @@ func Login(ctx *gin.Context){
 		panic(err)
 	}
 
-	loginUser,err:= loginUser(result.Email,result.Password)
-
-	if err != nil{
-		panic(err)
-	}
-	
-	fmt.Print(loginUser)
 	
 	ctx.SetCookie("jwt_token",tokenString,3600,"/Page/api/main","localhost",false,true)
 	
@@ -396,39 +400,25 @@ func Login(ctx *gin.Context){
 
 }
 
+
+
 func loginUser(email string,password string) (*fauna.QuerySuccess,error){
 
 	client := NewFaunaClient()
-	query,err := fauna.FQL("User.byEmail(${email}).first()",map[string]any{"email":email})
+
+	login,err := fauna.FQL(`LoginUser(${email},${password})`,map[string]any{"email":email,"password":password})
 
 	if err != nil{
-		log.Fatal("error for get User in login User")
-	}
-	res,err := client.Query(query)
-
-	if err != nil{
-		log.Fatal("error to run query: loginUser")
-	}
-
-	var user model.User
-
-	if err := res.Unmarshal(&user); err != nil{
-		log.Fatal("error to Unmarshal user")
-	}
-
-	login,err := fauna.FQL(`Credentials.byDocument(${user})?.login(${password})`,map[string]any{"user":user,"password":password})
-
-	if err != nil{
+		log.Fatal("error to que value ")
 		panic(err)
 	}
 
 	loginRes,err := client.Query(login)
 
 	if err != nil{
+		log.Fatal("erreur run query")
 		panic(err)
 	}
 
 	return loginRes, err
-	
 }
-

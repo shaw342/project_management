@@ -1,0 +1,60 @@
+role User {
+  privileges Projects {
+    read
+    write
+    history_read
+  }
+  privileges Task {
+    create
+    delete
+    read
+    write
+    create_with_id
+    history_read
+  }
+  privileges Credential {
+    read
+  }
+  privileges Collection {
+    create
+    delete
+    read
+    write
+  }
+  privileges Function {
+    create
+    delete
+    read
+    write
+    create_with_id
+    history_read
+  }
+  privileges Token {
+    create
+    delete
+    read
+    write
+    create_with_id
+  }
+  privileges Role {
+    read
+  }
+  privileges Key {
+    read
+  }
+  privileges Database {
+    read
+  }
+  membership User {
+    predicate ((user) => false)
+  }
+  privileges User {
+    read
+  }
+  privileges LoginUser {
+    call
+  }
+  privileges LogoutUser {
+    call
+  }
+}

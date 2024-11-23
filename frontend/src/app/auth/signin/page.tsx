@@ -1,10 +1,10 @@
 import React from "react";
-import SignInForm from "../../../components/auth/SignInForm";
+import SignInForm from "./SignInForm";
 
 export default function Signin() {
 
     return (
-        <div className="bg-slate-100 h-[100vh] flex justify-center items-center">
+        <div className="h-[100vh] flex justify-center items-center">
             <SignInForm/>
         </div>
     )

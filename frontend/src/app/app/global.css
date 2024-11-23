@@ -48,13 +48,3 @@
     --ring: 0 0% 40%;
   }
 }
-
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}

@@ -1,6 +1,7 @@
 import React from "react";
 import { expect, test ,describe,it} from 'vitest'
 import { render, screen } from '@testing-library/react'
+import Task from 
 import Home from './page'
 
 describe("home test",()=>{
@@ -13,3 +14,12 @@ describe("home test",()=>{
         expect(screen.getByRole("heading")).toHaveTextContent('hello world')
     })
 })
+
+describe("task test",()=>{
+    it("verify in task component is render correctly",(
+        render(<Task/>)
+
+    ))
+})
+
+

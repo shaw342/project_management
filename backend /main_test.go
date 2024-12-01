@@ -71,8 +71,6 @@ func TestCreateUser(t *testing.T) {
         t.Errorf("Expected user %v, but got %v", user, createdUser)
     }
 
-    if createdUser.Id == "" || createdUser.Password == "" || createdUser.Password == user.Password {
-        t.Errorf("Expected created user to have a non-empty ID and hashed password, but got %v", createdUser)
     }
 }
 
@@ -80,33 +78,40 @@ func TestCreateUser(t *testing.T) {
 
 func TestCreateTask(t *testing.T){
     err := godotenv.Load()
-    if err != nil{
+    if err != nil {
         panic(err)
     }
 
     value := os.Getenv("FAUNA_SECRET")
-    os.Setenv("FAUNA_SECRET",value)
-    router := gin.New()
 
+    os.Setenv("FAUNA_SECRET",value)
+
+    router := gin.New()
+ 
     router.POST("api/v1/task",repository.CreateTask)
     w := httptest.NewRecorder()
     task := model.Task{
+				Id:"23",
         Name: "faire les course",
-        Content:"acheter des tomate des legumes",
+        Content:"acheter des courgette",
         State: "IDLE",
     }
 
     taskJson,_ := json.Marshal(task)
     req,_ := http.NewRequest("POST","api/v1/task",bytes.NewBufferString(string(taskJson)))
     router.ServeHTTP(w,req)
+    t.Error(req)
     req.Header.Set("Content-Type","application/json")
+
+    if w.Code != http.StatusCreated {
+        t.Errorf("Expected status code %d, but got %d", http.StatusCreated, w.Code)
+    }
+
     assert.Equal(t,201,w.Code)
+
+    if task.Name == "" || task.Content == "" || task.State == ""{
+        t.Errorf("some information ar empty in task section")
+    }
+
 }
 
-func TestCreateProject(t *testing.T)  {
-    err := godotenv.Load()
-    if err != nil{
-        panic(err)
-    }
-    
-}

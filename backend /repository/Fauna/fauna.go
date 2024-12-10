@@ -19,15 +19,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-
-func  NewFaunaClient() *fauna.Client {
-	client,err := fauna.NewDefaultClient()
-	if err != nil{
+func NewFaunaClient() *fauna.Client {
+	client, err := fauna.NewDefaultClient()
+	if err != nil {
 		panic(err)
 	}
 	return client
 }
-
 
 var ecdsaPrivateKey *ecdsa.PrivateKey
 
@@ -35,21 +33,20 @@ func CreateUser(ctx *gin.Context) {
 	client := NewFaunaClient()
 	user := model.User{}
 
-
 	if err := ctx.BindJSON(&user); err != nil {
 		ctx.JSON(404, ctx.Errors)
 		return
 	}
 
-	if user.FirstName == " " || user.LastName == " " || user.Email == "" || user.Password == ""{
+	if user.FirstName == " " || user.LastName == " " || user.Email == "" || user.Password == "" {
 		fmt.Print(user)
 		log.Fatal("all field is not completed")
 	}
 
-	user.Id = uuid.NewString()
-	hashPassword,err := bcrypt.GenerateFromPassword([]byte(user.Password),14)
+	user.UserId = uuid.NewString()
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
 
-	if(err != nil){
+	if err != nil {
 		panic(err)
 	}
 	user.Password = string(hashPassword)
@@ -62,24 +59,23 @@ func CreateUser(ctx *gin.Context) {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	var scout model.User
 
 	if err := res.Unmarshal(&scout); err != nil {
 		panic(err)
 	}
-	if scout.FirstName == " " || scout.LastName == " " || scout.Email == "" || scout.Password == ""{
+	if scout.FirstName == " " || scout.LastName == " " || scout.Email == "" || scout.Password == "" {
 
 		fmt.Print(user)
 		log.Fatal("all field is not completed")
 	}
 
-	var Id = GetId(scout.FirstName,client)
-	CreatCredential(Id,scout.Password)
+	var Id = GetId(scout.FirstName, client)
+	CreatCredential(Id, scout.Password)
 	ctx.JSON(201, scout)
-	
-}
 
+}
 
 func CreateTask(ctx *gin.Context) {
 	client := NewFaunaClient()
@@ -119,16 +115,15 @@ func CreateProject(ctx *gin.Context) {
 		return
 	}
 
-	createProject, err := fauna.FQL("Projects.create(${project})",map[string]any{"project":project})
+	createProject, err := fauna.FQL("Projects.create(${project})", map[string]any{"project": project})
 
 	if err != nil {
 		panic(err)
 	}
 
 	res, err := client.Query(createProject)
-
 	if err != nil {
-		panic(err)
+		log.Fatal("failed run query")
 	}
 
 	var scout model.Project
@@ -138,240 +133,264 @@ func CreateProject(ctx *gin.Context) {
 	}
 
 	fmt.Println(scout.Name)
+
+	if err != nil {
+		log.Fatal("failed sign with project information")
+	}
 	ctx.JSON(201, scout)
 }
-func GetId(name string, client *fauna.Client) string{
+func GetId(name string, client *fauna.Client) string {
 	var Id string
-	query,err := fauna.FQL("User.byName(${name}).map(.id).first()",map[string]any{"name":name})
-	if err != nil{
+	query, err := fauna.FQL("User.byName(${name}).map(.id).first()", map[string]any{"name": name})
+	if err != nil {
 		panic(err)
 	}
-	res,_ := client.Query(query)
+	res, _ := client.Query(query)
 
-	if err := res.Unmarshal(&Id); err != nil{
+	if err := res.Unmarshal(&Id); err != nil {
 		panic(err)
 	}
 
 	return Id
 }
 
-func DeleteProject(ctx *gin.Context){
+func DeleteProject(ctx *gin.Context) {
 	client := NewFaunaClient()
 	name := model.Project{}
-	if err := ctx.ShouldBindJSON(&name);err != nil{
+	if err := ctx.ShouldBindJSON(&name); err != nil {
 		panic(err)
 	}
-	delete := fmt.Sprintf(`Projects.byName(%s).first()!.delete()`,name.Name)
-	query,_ := fauna.FQL(delete,nil)
+	delete := fmt.Sprintf(`Projects.byName(%s).first()!.delete()`, name.Name)
+	query, _ := fauna.FQL(delete, nil)
 
-	res,_ := client.Query(query)
+	res, _ := client.Query(query)
 
-	ctx.JSON(200,res)
-	
+	ctx.JSON(200, res)
+
 }
 
-func DeleteTask(ctx *gin.Context){
+func DeleteTask(ctx *gin.Context) {
 	client := NewFaunaClient()
 	data := model.Task{}
-	if err := ctx.ShouldBindJSON(&data);err != nil{
+	if err := ctx.ShouldBindJSON(&data); err != nil {
 		panic(err)
 	}
-	
-	query,_ := fauna.FQL(`Task.byName(${name}).first()!.delete()`,map[string]any{"name":data.Name})
-	res,_ := client.Query(query)
-	ctx.JSON(200,res)
+
+	query, _ := fauna.FQL(`Task.byName(${name}).first()!.delete()`, map[string]any{"name": data.Name})
+	res, _ := client.Query(query)
+	ctx.JSON(200, res)
 }
 
+func Welcome(ctx *gin.Context) {
+	client := NewFaunaClient()
 
-func UpdateProject(ctx *gin.Context){
+	userId := ctx.MustGet("UserId")
+	//log.Fatal(userId)
+	query, err := fauna.FQL("User.byUserId(${userId}).first()", map[string]any{"userId": userId})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, _ := client.Query(query)
+
+	var user model.User
+
+	if err := res.Unmarshal(&user); err != nil {
+		log.Fatal(err)
+	}
+	ctx.JSON(http.StatusOK, gin.H{"message": user})
+}
+
+func UpdateProject(ctx *gin.Context) {
 	client := NewFaunaClient()
 	project := model.Project{}
-	if err := ctx.ShouldBindJSON(&project); err != nil{
+	if err := ctx.ShouldBindJSON(&project); err != nil {
 		panic(err)
 	}
-	query,_ := fauna.FQL(`Projects.byUserId(${Id}).first()!.update(${project})`,map[string]any{"Id": project.Id,"project":project})
-	res,err := client.Query(query)
-	if err != nil{
+	query, _ := fauna.FQL(`Projects.byUserId(${Id}).first()!.update(${project})`, map[string]any{"Id": project.Id, "project": project})
+	res, err := client.Query(query)
+	if err != nil {
 		panic(err)
 	}
 
 	var newProject model.Project
 
-	if err := res.Unmarshal(&newProject); err != nil{
+	if err := res.Unmarshal(&newProject); err != nil {
 		panic(err)
 	}
-	ctx.JSON(200,newProject.Name)
+	ctx.JSON(200, newProject.Name)
 
 }
-func UpdateTasks(ctx *gin.Context)  {
+func UpdateTasks(ctx *gin.Context) {
 	client := NewFaunaClient()
 	task := model.Task{}
 
-	if err := ctx.ShouldBindJSON(&task); err != nil{
-		ctx.JSON(404,err)
+	if err := ctx.ShouldBindJSON(&task); err != nil {
+		ctx.JSON(404, err)
 	}
 
-	query,_ := fauna.FQL(`Task.byName(${name}).first()!.update(${task})`,map[string]any{"Id": task.Id, "task":task})
+	query, _ := fauna.FQL(`Task.byName(${name}).first()!.update(${task})`, map[string]any{"Id": task.Id, "task": task})
 
-	res,err := client.Query(query)
+	res, err := client.Query(query)
 
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 
 	var result model.Project
 
-	if err := res.Unmarshal(&result); err != nil{
+	if err := res.Unmarshal(&result); err != nil {
 		panic(err)
 	}
 
-	ctx.JSON(http.StatusOK,result)
+	ctx.JSON(http.StatusOK, result)
 }
 
-func GetUser(ctx *gin.Context){
+func GetUser(ctx *gin.Context) {
 	client := NewFaunaClient()
 	data := model.User{}
-	if err := ctx.ShouldBindJSON(&data);err != nil{
+	if err := ctx.ShouldBindJSON(&data); err != nil {
 		panic(err)
 	}
-	query,_ := fauna.FQL(`User.byName(${name}).first()`,map[string]any{"name":data.FirstName})
+	query, _ := fauna.FQL(`User.byName(${name}).first()`, map[string]any{"name": data.FirstName})
 
-	res,_ := client.Query(query)
-	
+	res, _ := client.Query(query)
+
 	var scout model.Project
 
-	if err := res.Unmarshal(&scout); err != nil{
-		ctx.JSON(404,err)
+	if err := res.Unmarshal(&scout); err != nil {
+		ctx.JSON(404, err)
 	}
-	ctx.JSON(200,scout.Name)
+	ctx.JSON(200, scout.Name)
 }
 
-func CreatCredential(Id string,Password string) *fauna.QuerySuccess{
+func CreatCredential(Id string, Password string) *fauna.QuerySuccess {
 	client := NewFaunaClient()
-	query,_ := fauna.FQL("Credential.create({document:User.byId(${Id}),password:${password}})",map[string]any{"Id":Id,"password":Password})
-	res,err := client.Query(query)
-	if err != nil{
+	query, _ := fauna.FQL("Credential.create({document:User.byId(${Id}),password:${password}})", map[string]any{"Id": Id, "password": Password})
+	res, err := client.Query(query)
+	if err != nil {
 		panic(err)
 	}
 	return res
 }
 
-func GetTask(ctx *gin.Context){
+func GetTask(ctx *gin.Context) {
 	client := NewFaunaClient()
 	name := model.Task{}
-	if err := ctx.ShouldBindJSON(&name);err != nil{
-		ctx.JSON(404,err)
-	}
-	query,err := fauna.FQL("Task.byName(${name}).first()",map[string]any{"name":name.Name})
+	UserId := ctx.MustGet("UserId")
 
-	if err != nil{
+	if err := ctx.ShouldBindJSON(&name); err != nil {
+		ctx.JSON(404, err)
+	}
+
+	query, err := fauna.FQL("Task.byName(${name}).first()", map[string]any{"name": name.Name})
+
+	if err != nil {
 		panic(err)
 	}
-	res,err := client.Query(query)
-	if err != nil{
+	res, err := client.Query(query)
+	if err != nil {
 		panic(err)
 	}
 	var task model.Task
 
-	if err := res.Unmarshal(&task);err != nil{
-		ctx.JSON(403,err)
+	if err := res.Unmarshal(&task); err != nil {
+		ctx.JSON(403, err)
 	}
-	ctx.JSON(200,task)
+	ctx.JSON(200, task)
 }
 
-func GetProject(ctx *gin.Context){
+func GetProject(ctx *gin.Context) {
 	client := NewFaunaClient()
 	Project := model.Project{}
 
-	if err := ctx.ShouldBindJSON(&Project);err != nil{
+	if err := ctx.ShouldBindJSON(&Project); err != nil {
 		panic(err)
 	}
-	query,err := fauna.FQL(`Project.byName(${name}).first()`,map[string]any{"name":Project.Name})
+	query, err := fauna.FQL(`Project.byName(${name}).first()`, map[string]any{"name": Project.Name})
 
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
-	res,err := client.Query(query)
+	res, err := client.Query(query)
 
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 	var result model.Project
-	if err := res.Unmarshal(result); err != nil{
+	if err := res.Unmarshal(result); err != nil {
 		panic(err)
 	}
-	ctx.JSON(200,result)
-	
+	ctx.JSON(200, result)
+
 }
 
-
-func GetUserByEmail(ctx *gin.Context)  {
+func GetUserByEmail(ctx *gin.Context) {
 	client := NewFaunaClient()
 	auth := model.Auth{}
 
-	if err := ctx.ShouldBindJSON(&auth);err != nil{
+	if err := ctx.ShouldBindJSON(&auth); err != nil {
 		panic(err)
 	}
-	fmt.Println(auth.Email)
-	query,err := fauna.FQL("User.byEmail(${email}).first()",map[string]any{"email":auth.Email})
-	if err != nil{
+	query, err := fauna.FQL("User.byEmail(${email}).first()", map[string]any{"email": auth.Email})
+	if err != nil {
 		panic(err)
 	}
-	res,_ := client.Query(query)
+	res, _ := client.Query(query)
 
 	var user model.User
 
-	if err := res.Unmarshal(&user);err != nil{
+	if err := res.Unmarshal(&user); err != nil {
 		panic(err)
 	}
 
-	ctx.JSON(200,user)
+	ctx.JSON(200, user)
 }
-
 
 func init() {
 
-    keyData, err := os.ReadFile("ecdsa_private_key.pem")
-    if err != nil {
-        panic(err)
-    }
+	keyData, err := os.ReadFile("ecdsa_private_key.pem")
+	if err != nil {
+		panic(err)
+	}
 
-    block, _ := pem.Decode(keyData)
-    if block == nil || block.Type != "EC PRIVATE KEY" {
-        panic("invalid private key ECDSA ")
-    }
+	block, _ := pem.Decode(keyData)
+	if block == nil || block.Type != "EC PRIVATE KEY" {
+		panic("invalid private key ECDSA ")
+	}
 
-    ecdsaPrivateKey, err = x509.ParseECPrivateKey(block.Bytes)
-    if err != nil {
-        panic(err)
-    }
+	ecdsaPrivateKey, err = x509.ParseECPrivateKey(block.Bytes)
+	if err != nil {
+		panic(err)
+	}
 }
 
-func Login(ctx *gin.Context){
+func Login(ctx *gin.Context) {
 	client := NewFaunaClient()
 	err := godotenv.Load()
 
-	if err != nil{
+	if err != nil {
 		panic("probleme with key")
 	}
 
 	auth := model.Auth{}
 
-	if err:= ctx.ShouldBindJSON(&auth);err != nil{
+	if err := ctx.ShouldBindJSON(&auth); err != nil {
 		panic(err)
 	}
-	password,err := fauna.FQL("User.byEmail(${email}).first()",map[string]any{"email":auth.Email})
-	if err != nil{
+	password, err := fauna.FQL("User.byEmail(${email}).first()", map[string]any{"email": auth.Email})
+	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid username or password"})
 	}
-	res,err := client.Query(password)
-	if err != nil{
-		ctx.JSON(http.StatusBadRequest,gin.H{"error":"bad command"})
+	res, err := client.Query(password)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad command"})
 	}
 
 	var result model.User
 
-	if err := res.Unmarshal(&result);err != nil{
+	if err := res.Unmarshal(&result); err != nil {
 		ctx.JSON(http.NoBody.Read([]byte(result.Email)))
 	}
 
@@ -380,42 +399,46 @@ func Login(ctx *gin.Context){
 
 	}
 
-
-	token := jwt.NewWithClaims(jwt.SigningMethodES256,jwt.MapClaims{
-		"Issuer":result.Id,
-		"exp": time.Now().Add(time.Hour * 1).Unix(), 
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
+		"Issuer": result.UserId,
+		"exp":    time.Now().Add(time.Hour * 1).Unix(),
 	})
 
-
-	tokenString,err := token.SignedString(ecdsaPrivateKey)
-	if err != nil{
+	tokenString, err := token.SignedString(ecdsaPrivateKey)
+	if err != nil {
 		panic(err)
 	}
+	loginUser(result.Email, result.Password)
 
-	
-	ctx.SetCookie("jwt_token",tokenString,3600,"/Page/api/main","localhost",false,true)
-	
+	ctx.SetCookie("jwt_token", tokenString, 3600, "/Page/api/main", "localhost", false, true)
 
-	ctx.JSON(http.StatusOK,gin.H{"token":tokenString})
+	ctx.JSON(http.StatusOK, gin.H{"token": tokenString})
 
 }
 
+func Logout(ctx *gin.Context) {
+	token := ctx.Request.Header.Get("Autorization")
 
+	if token != "" {
+		ctx.JSON(404, gin.H{"error": "connot read Token"})
+	}
+	ctx.SetCookie("", "", -1, "/", "localhost", false, true)
+}
 
-func loginUser(email string,password string) (*fauna.QuerySuccess,error){
+func loginUser(email string, password string) (*fauna.QuerySuccess, error) {
 
 	client := NewFaunaClient()
 
-	login,err := fauna.FQL(`LoginUser(${email},${password})`,map[string]any{"email":email,"password":password})
+	login, err := fauna.FQL(`LoginUser(${email},${password})`, map[string]any{"email": email, "password": password})
 
-	if err != nil{
+	if err != nil {
 		log.Fatal("error to que value ")
 		panic(err)
 	}
 
-	loginRes,err := client.Query(login)
+	loginRes, err := client.Query(login)
 
-	if err != nil{
+	if err != nil {
 		log.Fatal("erreur run query")
 		panic(err)
 	}

@@ -146,3 +146,45 @@ func TestDeleteProject(t *testing.T) {
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
 }
+
+func TestUpdateProject(t *testing.T) {
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	value := os.Getenv("FAUNA_SECRET")
+
+	os.Setenv("FAUNA_SECRET", value)
+
+	router := SetUpRouter()
+
+	router.PATCH("api/v1/updateProject", repository.UpdateProject)
+
+	w := httptest.NewRecorder()
+
+	req, err := http.NewRequest("PATCH", "api/v1/", strings.NewReader(`{"name":"web-site"}`))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer")
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestGetProject(t *testing.T) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	value := os.Getenv("FAUNA_SECRET")
+
+	os.Setenv("FAUNA_SECRET", value)
+
+}

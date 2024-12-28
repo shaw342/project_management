@@ -1,3 +1,39 @@
+role Owner {
+  privileges User {
+    create
+    delete
+    read
+    write
+    create_with_id
+    history_read
+  }
+  privileges Projects {
+    create
+    delete
+    read
+    write
+    create_with_id
+    history_read
+  }
+  privileges Task {
+    create
+    delete
+    read
+    write
+    create_with_id
+    history_read
+  }
+  privileges Role {
+    create
+    delete
+    read
+    write
+    create_with_id
+    history_read
+  }
+}
+
+
 role User {
   privileges Projects {
     read
@@ -45,9 +81,6 @@ role User {
   privileges Database {
     read
   }
-  membership User {
-    predicate ((user) => false)
-  }
   privileges User {
     read
   }
@@ -56,5 +89,8 @@ role User {
   }
   privileges LogoutUser {
     call
+  }
+  membership User {
+    predicate ((user) => false)
   }
 }

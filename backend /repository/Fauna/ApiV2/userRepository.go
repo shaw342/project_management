@@ -1,4 +1,4 @@
-package repository
+package Api_v2
 
 import (
 	"github.com/shaw342/projet_argile/backend/model"

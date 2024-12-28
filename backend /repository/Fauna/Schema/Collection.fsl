@@ -1,0 +1,49 @@
+// The following schema is auto-generated.
+// This file contains FSL for FQL10-compatible schema items.
+
+collection Projects {
+    unique [.Id]
+
+    Id: String
+    Name: String?
+
+
+    index byName {
+    terms [.Name]
+    }
+
+    index byProjectId {
+    terms [.Id]
+    }
+
+    OwnerId: Ref<Owner>
+    Tasks: Array<Ref<Task>>
+}
+
+collection Task {
+    unique [.Name]
+
+    index byTaskName {
+        terms [.data.Name]
+    }
+}
+
+collection User {
+    unique [.FirstName,.LastName]
+    unique [.Email]
+
+    index byName {
+        terms [.data.FirstName]
+    }
+    index byEmail {
+        terms [.data.Email]
+    }
+
+    index byUserId {
+        terms [.data.UserId]
+    }
+}
+
+collection Owner {
+    project: Ref<Projects>
+}

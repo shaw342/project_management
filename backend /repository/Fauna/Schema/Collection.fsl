@@ -53,3 +53,12 @@ collection Owner {
     Email: String
     project: Ref<Projects>
 }
+
+
+collection Team{
+    unique [.Id]
+
+    Id: String
+    Name: String
+    Members: Array<Ref<User | Owner>>
+}

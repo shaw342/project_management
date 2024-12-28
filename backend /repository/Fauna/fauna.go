@@ -484,30 +484,3 @@ func loginUser(email string, password string) (*fauna.QuerySuccess, error) {
 
 	return loginRes, err
 }
-
-func HandleProject(ctx *gin.Context) {
-	client := fauna.NewClient("fnEFzqGZtaAAywWMqk8t8ADQ7Q4f2wfIcK7Jp7up_95rvSw5LrU", fauna.DefaultTimeouts())
-	project := model.Project{}
-
-	if err := ctx.ShouldBindJSON(&project); err != nil {
-		log.Fatalf("failed bin json object")
-	}
-
-	data := map[string]any{
-		"id":   project.Id,
-		"name": project.Name,
-	}
-	query, err := fauna.FQL(`CreateProject(${project})`, map[string]any{"project": project})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	res, err := client.Query(query)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ctx.JSON(http.StatusAccepted, res)
-}

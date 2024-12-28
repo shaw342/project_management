@@ -45,5 +45,11 @@ collection User {
 }
 
 collection Owner {
+    unique [.Id]
+
+    Id: String
+    FirstName: String
+    LastName: String
+    Email: String
     project: Ref<Projects>
 }

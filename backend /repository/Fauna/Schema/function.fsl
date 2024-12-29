@@ -49,7 +49,7 @@ function OwnerSignup(Id, FirstName, LastName,Email,Password) {
   })
 
   let credential = Credential.create({
-    document: onwer,
+    document: owner,
     password: Passwords
   })
 } 

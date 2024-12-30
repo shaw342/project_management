@@ -6,7 +6,8 @@ collection Projects {
 
     Id: String
     Name: String?
-
+    Owner: Ref<Owner>
+    Tasks: Array<Ref<Task>>
 
     index byName {
     terms [.Name]
@@ -15,9 +16,6 @@ collection Projects {
     index byProjectId {
     terms [.Id]
     }
-
-    Owner: Ref<Owner>
-    Tasks: Array<Ref<Task>>
 }
 
 collection Task {
@@ -57,18 +55,25 @@ collection User {
     }
 
     index byUserId {
-        terms [.UserId]
+        terms [.Id]
     }
 }
 
 collection Owner {
     unique [.Id]
 
-    Id: String
-    FirstName: String
-    LastName: String
-    Email: String
-    Password: String
+    Id: String?
+    FirstName: String?
+    LastName: String?
+    Email: String?
+
+    index byOwnerId {
+        terms [.Id]
+    }
+    
+    index byEmail {
+        terms [.Email]
+    }
 }
 
 

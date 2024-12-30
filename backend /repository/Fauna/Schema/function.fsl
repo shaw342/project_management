@@ -38,13 +38,13 @@ function UserSignup(Id,FirstName,LastName,Email,Password) {
 }
 
 @role("server")
-function OwnerSignup(Id,FirstName,LastName,Email,Password,Projects) {
+function OwnerSignup(Id,FirstName,LastName,Email,Password) {
   let owner = Owner.create({
     Id:Id,
     FirstName:FirstName,
     LastName:LastName,
     Email: Email,
-    project: Projects
+
   })
 
  

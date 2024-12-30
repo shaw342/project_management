@@ -63,7 +63,7 @@ collection Owner {
     FirstName: String
     LastName: String
     Email: String
-    project: Ref<Projects>
+    Password: String
 }
 
 

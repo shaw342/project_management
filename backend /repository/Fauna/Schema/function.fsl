@@ -6,7 +6,7 @@ function CreateProject(data){
 @role("server")
 function LoginUser(email,password) {
 
-  let user = User.byEmail(email)?.first()
+ let user = User.byEmail(email)?.first()
   Credential.byDocument(user)
     ?.login(password, Time.now().add(60, "minutes"))
 }
@@ -28,28 +28,31 @@ function UserSignup(Id,FirstName,LastName,Email,Password) {
     Email: Email
   })
 
-  // Creates a credential that associates the
-  // `Customer` document with an end user's password.
+ 
   let credential = Credential.create({
     document: user,
     password: Password
   })
 
-  // Outputs the credential as an object.
   Object.assign({ }, credential)
 }
 
 @role("server")
-function OwnerSignup(Id, FirstName, LastName,Email,Password) {
+function OwnerSignup(Id,FirstName,LastName,Email,Password,Projects) {
   let owner = Owner.create({
     Id:Id,
-    FirstName: FirstName,
-    LastName: LastName,
-    Email: Email
+    FirstName:FirstName,
+    LastName:LastName,
+    Email: Email,
+    project: Projects
   })
 
+ 
   let credential = Credential.create({
     document: owner,
-    password: Passwords
+    password: Password
   })
-} 
+
+ 
+  Object.assign({ }, credential)
+}

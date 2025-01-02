@@ -1,4 +1,4 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react"
+import { Calendar, Home, Inbox, Search, Settings,ListTodo } from "lucide-react"
 
 import {
   Sidebar,
@@ -29,9 +29,9 @@ const items = [
     icon: Calendar,
   },
   {
-    title: "Search",
+    title: "Task",
     url: "#",
-    icon: Search,
+    icon: ListTodo,
   },
   {
     title: "Settings",
@@ -42,7 +42,7 @@ const items = [
 
 export function AppSidebar() {
   return (
-    <Sidebar>
+    <Sidebar variant="inset">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Application</SidebarGroupLabel>

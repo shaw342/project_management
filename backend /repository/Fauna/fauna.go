@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"crypto/ecdsa"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
@@ -28,10 +27,9 @@ func NewFaunaClient() *fauna.Client {
 	return client
 }
 
-var ecdsaPrivateKey *ecdsa.PrivateKey
 var rsaPrivateKey *rsa.PrivateKey
 
-func CreateUser(ctx *gin.Context) {
+func Register(ctx *gin.Context) {
 	client := NewFaunaClient()
 	user := model.User{}
 
@@ -40,22 +38,19 @@ func CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	if user.FirstName == " " || user.LastName == " " || user.Email == "" || user.Password == "" {
+	if user.FirstName == "" || user.LastName == "" || user.Email == "" || user.Password == "" {
 		fmt.Print(user)
 		log.Fatal("all field is not completed")
 	}
 
-	user.UserId = uuid.NewString()
-	hashPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 14)
+	fmt.Println(user.FirstName)
+
+	user.Id = uuid.New().String()
+
+	createUser, err := fauna.FQL(`UserSignup(${Id},${FirstName},${LastName},${Email},${Password})`, map[string]any{"Id": user.Id, "FirstName": user.FirstName, "LastName": user.LastName, "Email": user.Email, "Password": user.Password})
 
 	if err != nil {
-		panic(err)
-	}
-	user.Password = string(hashPassword)
-	createUser, err := fauna.FQL(`User.create(${data})`, map[string]any{"data": user})
-
-	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	res, err := client.Query(createUser)
@@ -63,20 +58,7 @@ func CreateUser(ctx *gin.Context) {
 		panic(err)
 	}
 
-	var scout model.User
-
-	if err := res.Unmarshal(&scout); err != nil {
-		panic(err)
-	}
-	if scout.FirstName == " " || scout.LastName == " " || scout.Email == "" || scout.Password == "" {
-
-		fmt.Print(user)
-		log.Fatal("all field is not completed")
-	}
-
-	var Id = GetId(scout.FirstName, client)
-	CreatCredential(Id, scout.Password)
-	ctx.JSON(201, scout)
+	ctx.JSON(201, res.Data)
 
 }
 
@@ -142,6 +124,7 @@ func CreateProject(ctx *gin.Context) {
 	}
 	ctx.JSON(201, scout)
 }
+
 func GetId(name string, client *fauna.Client) string {
 	var Id string
 	query, err := fauna.FQL("User.byName(${name}).map(.id).first()", map[string]any{"name": name})
@@ -408,7 +391,7 @@ func Login(ctx *gin.Context) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"Issuer": result.UserId,
+		"Issuer": result.Id,
 		"exp":    time.Now().Add(time.Hour * 1).Unix(),
 	})
 

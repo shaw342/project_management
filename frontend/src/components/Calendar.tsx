@@ -5,8 +5,7 @@ import { Calendar as BigCalendar, momentLocalizer, Views } from 'react-big-calen
 import moment from 'moment'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { format } from 'date-fns'
-import Header from './Header'
-import Toolbar from './Toolbar'
+
 import Event from './Event'
 
 // Setup the localizer for BigCalendar

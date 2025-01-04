@@ -6,8 +6,6 @@ import moment from 'moment'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import { format } from 'date-fns'
 
-import Event from './Event'
-
 // Setup the localizer for BigCalendar
 const localizer = momentLocalizer(moment)
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/shaw342/projet_argile/backend/Middleware"
 	repository "github.com/shaw342/projet_argile/backend/repository/Fauna"
 )
 
@@ -45,7 +46,8 @@ func main() {
 
 	v1 := r.Group("api/v1")
 	{
-		v1.POST("/login", repository.Login)
+		v1.POST("/welcome", Middleware.AuthMiddleware(), repository.Welcome)
+		v1.POST("/login", repository.LoginUser)
 		v1.POST("/register", repository.Register)
 		v1.POST("/task", repository.CreateTask)
 		v1.POST("/getUser", repository.GetUserByEmail)

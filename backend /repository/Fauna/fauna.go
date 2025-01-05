@@ -16,7 +16,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/shaw342/projet_argile/backend/model"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func NewFaunaClient() *fauna.Client {
@@ -171,7 +170,7 @@ func Welcome(ctx *gin.Context) {
 	client := NewFaunaClient()
 
 	userId := ctx.MustGet("UserId")
-	//log.Fatal(userId)
+
 	query, err := fauna.FQL("User.byUserId(${userId}).first()", map[string]any{"userId": userId})
 
 	if err != nil {
@@ -357,7 +356,7 @@ func init() {
 	fmt.Println("Private key loaded successfully")
 }
 
-func Login(ctx *gin.Context) {
+func LoginUser(ctx *gin.Context) {
 	client := NewFaunaClient()
 	err := godotenv.Load()
 
@@ -365,105 +364,59 @@ func Login(ctx *gin.Context) {
 		panic("probleme with key")
 	}
 
-	auth := model.Auth{}
-
-	if err := ctx.ShouldBindJSON(&auth); err != nil {
-		panic(err)
-	}
-	password, err := fauna.FQL("User.byEmail(${email}).first()", map[string]any{"email": auth.Email})
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid username or password"})
-	}
-	res, err := client.Query(password)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "bad command"})
-	}
-
-	var result model.User
-
-	if err := res.Unmarshal(&result); err != nil {
-		ctx.JSON(http.NoBody.Read([]byte(result.Email)))
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(auth.Password)); err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
-
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"Issuer": result.Id,
-		"exp":    time.Now().Add(time.Hour * 1).Unix(),
-	})
-
-	tokenString, err := token.SignedString(rsaPrivateKey)
-	if err != nil {
-		panic(err)
-	}
-	loginUser(result.Email, result.Password)
-
-	ctx.SetCookie("jwt_token", tokenString, 3600, "/Page/api/main", "localhost", false, true)
-
-	ctx.JSON(http.StatusOK, gin.H{"token": tokenString})
-
-}
-
-func Logout(ctx *gin.Context) {
-	token := ctx.Request.Header.Get("Autorization")
-
-	if token != "" {
-		ctx.JSON(404, gin.H{"error": "connot read Token"})
-	}
-	ctx.SetCookie("", "", -1, "/", "localhost", false, true)
-}
-
-func LoginUser(ctx *gin.Context) {
-	client := NewFaunaClient()
-
 	user := model.User{}
 
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		log.Fatalf("fail to bind Json object")
 	}
 
-	fmt.Println(user.Email)
+	userData, err := fauna.FQL("User.byEmail(${email}).first()", map[string]any{"email": user.Email})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resUser, err := client.Query(userData)
+
+	if err != nil {
+		log.Fatal("error to run query")
+	}
+
+	var result model.User
+
+	if err := resUser.Unmarshal(&result); err != nil {
+		log.Fatal("error to Unmshal use data")
+	}
+
 	login, err := fauna.FQL(`LoginUser(${email},${password})`, map[string]any{"email": user.Email, "password": user.Password})
 
 	if err != nil {
-		log.Fatalf("error fql syntaxe")
+		log.Fatalf("error fql syntaxe for login")
 	}
 
 	res, err := client.Query(login)
-
 	if err != nil {
 		log.Fatalf("error run query")
 	}
+	var faunaToken model.Token
 
-	var token model.Token
-
-	if err := res.Unmarshal(&token); err != nil {
+	if err := res.Unmarshal(&faunaToken); err != nil {
 		log.Fatalf("failed to Unmarshal data")
 	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"Issuer": result.Id,
+		"token":  faunaToken,
+		"exp":    time.Now().Add(time.Hour * 1).Unix(),
+	})
 
+	tokenString, err := token.SignedString(rsaPrivateKey)
+
+	if err != nil {
+		panic(err)
+	}
+
+	ctx.SetCookie("jwt_token", tokenString, 3600, "/Page/api/main", "localhost", false, true)
+
+	ctx.JSON(http.StatusOK, gin.H{"token": tokenString})
 	ctx.JSON(http.StatusAccepted, token)
-}
-
-func loginUser(email string, password string) (*fauna.QuerySuccess, error) {
-
-	client := NewFaunaClient()
-
-	login, err := fauna.FQL(`LoginUser(${email},${password})`, map[string]any{"email": email, "password": password})
-
-	if err != nil {
-		log.Fatal("error to que value ")
-		panic(err)
-	}
-
-	loginRes, err := client.Query(login)
-
-	if err != nil {
-		log.Fatal("erreur run query")
-		panic(err)
-	}
-
-	return loginRes, err
 }

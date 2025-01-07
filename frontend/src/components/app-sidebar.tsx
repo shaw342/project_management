@@ -1,8 +1,9 @@
-import { Calendar, Home, Inbox, Search, Settings,ListTodo } from "lucide-react"
+import { Calendar, Home, Inbox, Search, Settings,ListTodo, ChevronUp, User2,NotebookPen, MessageCircle } from "lucide-react"
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -11,11 +12,14 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
+import { RiTeamLine } from "react-icons/ri";
+import { title } from "process";
+
 // Menu items.
 const items = [
   {
     title: "Home",
-    url: "#",
+    url: "/dashboard",
     icon: Home,
   },
   {
@@ -30,14 +34,25 @@ const items = [
   },
   {
     title: "Task",
-    url: "#",
+    url: "/dashboard/tasks",
     icon: ListTodo,
   },
   {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
+    title: "Notes",
+    url:"#",
+    icon: NotebookPen,
+
   },
+  {
+    title:"Teams",
+    url:"#",
+    icon:RiTeamLine
+  },
+  {
+    title:"Chat",
+    url:"#",
+    icon:MessageCircle
+  }
 ]
 
 export function AppSidebar() {
@@ -62,6 +77,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+  
     </Sidebar>
   )
 }

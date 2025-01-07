@@ -13,8 +13,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Task } from '@/components/task-item'
 import { X } from 'lucide-react'
+import axios from "axios"
+import useSWR from "swr"
 
-interface TodoItem {
+const fetcher = (url: any) => axios.get(url).then(res => res.data)
+
+interface TodoItem { 
     id: number;
     text: string;
     completed: boolean;
@@ -29,6 +33,12 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
     const [newTodo, setNewTodo] = useState('')
     const [newPriority, setNewPriority] = useState('')
 
+    const {data,error} = useSWR("https://jsonplaceholder.typicode.com/posts/1",fetcher)
+
+    console.log('====================================');
+    console.log(data);
+    console.log('====================================');
+
     useEffect(() => {
     const mockTask: Task = {
         id: parseInt(params.id),
@@ -41,6 +51,7 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
         assignee: 'John Doe',
         priorities: ['Complete design', 'Implement backend', 'Write tests']
     }
+
     setTask(mockTask)
     setEditedTask(mockTask)
     setTodos([

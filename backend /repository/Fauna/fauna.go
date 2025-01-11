@@ -262,16 +262,6 @@ func GetUser(ctx *gin.Context) {
 	ctx.JSON(200, scout.Name)
 }
 
-func CreatCredential(Id string, Password string) *fauna.QuerySuccess {
-	client := NewFaunaClient()
-	query, _ := fauna.FQL("Credential.create({document:User.byId(${Id}),password:${password}})", map[string]any{"Id": Id, "password": Password})
-	res, err := client.Query(query)
-	if err != nil {
-		panic(err)
-	}
-	return res
-}
-
 func GetTask(ctx *gin.Context) {
 	token := ctx.MustGet("token").(string)
 	client := fauna.NewClient(token, fauna.DefaultTimeouts())

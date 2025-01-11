@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"crypto/rsa"
+	"crypto/ecdsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -26,7 +26,7 @@ func NewFaunaClient() *fauna.Client {
 	return client
 }
 
-var rsaPrivateKey *rsa.PrivateKey
+var ecdsaPrivateKey *ecdsa.PrivateKey
 
 func Register(ctx *gin.Context) {
 	client := NewFaunaClient()
@@ -62,13 +62,15 @@ func Register(ctx *gin.Context) {
 }
 
 func CreateTask(ctx *gin.Context) {
-	client := NewFaunaClient()
+	token := ctx.MustGet("token").(string)
+	client := fauna.NewClient(token, fauna.DefaultTimeouts())
 	task := model.Task{}
 
-	if err := ctx.BindJSON(&task); err != nil {
+	if err := ctx.ShouldBindJSON(&task); err != nil {
 		ctx.JSON(404, ctx.Errors)
 		return
 	}
+
 	task.Id = uuid.NewString()
 	createTask, err := fauna.FQL(`Task.create(${task})`, map[string]any{"task": task})
 
@@ -86,15 +88,16 @@ func CreateTask(ctx *gin.Context) {
 	if err := res.Unmarshal(&scout); err != nil {
 		panic(err)
 	}
-	fmt.Println(scout.Name)
+
 	ctx.JSON(200, scout)
 }
 
 func CreateProject(ctx *gin.Context) {
-	client := NewFaunaClient()
+	token := ctx.MustGet("token").(string)
+	client := fauna.NewClient(token, fauna.DefaultTimeouts())
 	project := model.Project{}
 
-	if err := ctx.BindJSON(&project); err != nil {
+	if err := ctx.ShouldBindJSON(&project); err != nil {
 		ctx.JSON(404, ctx.Errors)
 		return
 	}
@@ -140,8 +143,10 @@ func GetId(name string, client *fauna.Client) string {
 }
 
 func DeleteProject(ctx *gin.Context) {
-	client := NewFaunaClient()
+	token := ctx.MustGet("token").(string)
+	client := fauna.NewClient(token, fauna.DefaultTimeouts())
 	name := model.Project{}
+
 	if err := ctx.ShouldBindJSON(&name); err != nil {
 		panic(err)
 	}
@@ -155,8 +160,10 @@ func DeleteProject(ctx *gin.Context) {
 }
 
 func DeleteTask(ctx *gin.Context) {
-	client := NewFaunaClient()
+	token := ctx.MustGet("token").(string)
+	client := fauna.NewClient(token, fauna.DefaultTimeouts())
 	data := model.Task{}
+
 	if err := ctx.ShouldBindJSON(&data); err != nil {
 		panic(err)
 	}
@@ -167,9 +174,9 @@ func DeleteTask(ctx *gin.Context) {
 }
 
 func Welcome(ctx *gin.Context) {
-	client := NewFaunaClient()
-
 	userId := ctx.MustGet("UserId")
+	token := ctx.MustGet("token").(string)
+	client := fauna.NewClient(token, fauna.DefaultTimeouts())
 
 	query, err := fauna.FQL("User.byUserId(${userId}).first()", map[string]any{"userId": userId})
 
@@ -180,20 +187,24 @@ func Welcome(ctx *gin.Context) {
 	res, _ := client.Query(query)
 
 	var user model.User
-
 	if err := res.Unmarshal(&user); err != nil {
 		log.Fatal(err)
 	}
-	ctx.JSON(http.StatusOK, gin.H{"message": user})
+	fmt.Println(user)
+	ctx.JSON(http.StatusOK, user)
 }
 
 func UpdateProject(ctx *gin.Context) {
-	client := NewFaunaClient()
+	token := ctx.MustGet("token").(string)
+	client := fauna.NewClient(token, fauna.DefaultTimeouts())
 	project := model.Project{}
+
 	if err := ctx.ShouldBindJSON(&project); err != nil {
 		panic(err)
 	}
+
 	query, _ := fauna.FQL(`Projects.byUserId(${Id}).first()!.update(${project})`, map[string]any{"Id": project.Id, "project": project})
+
 	res, err := client.Query(query)
 	if err != nil {
 		panic(err)
@@ -208,7 +219,8 @@ func UpdateProject(ctx *gin.Context) {
 
 }
 func UpdateTasks(ctx *gin.Context) {
-	client := NewFaunaClient()
+	token := ctx.MustGet("token").(string)
+	client := fauna.NewClient(token, fauna.DefaultTimeouts())
 	task := model.Task{}
 
 	if err := ctx.ShouldBindJSON(&task); err != nil {
@@ -261,7 +273,8 @@ func CreatCredential(Id string, Password string) *fauna.QuerySuccess {
 }
 
 func GetTask(ctx *gin.Context) {
-	client := NewFaunaClient()
+	token := ctx.MustGet("token").(string)
+	client := fauna.NewClient(token, fauna.DefaultTimeouts())
 	name := model.Task{}
 
 	if err := ctx.ShouldBindJSON(&name); err != nil {
@@ -332,28 +345,21 @@ func GetUserByEmail(ctx *gin.Context) {
 	ctx.JSON(200, user)
 }
 func init() {
-	keyData, err := os.ReadFile("private_key.pem")
+
+	keyData, err := os.ReadFile("ecdsa_private_key.pem")
 	if err != nil {
 		panic(err)
 	}
 
 	block, _ := pem.Decode(keyData)
-	if block == nil || block.Type != "PRIVATE KEY" {
-		panic("failed to decode PEM block containing the private key")
+	if block == nil || block.Type != "EC PRIVATE KEY" {
+		panic("invalid private key ECDSA ")
 	}
 
-	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+	ecdsaPrivateKey, err = x509.ParseECPrivateKey(block.Bytes)
 	if err != nil {
 		panic(err)
 	}
-
-	var ok bool
-	rsaPrivateKey, ok = key.(*rsa.PrivateKey)
-	if !ok {
-		panic("key is not of type *rsa.PrivateKey")
-	}
-
-	fmt.Println("Private key loaded successfully")
 }
 
 func LoginUser(ctx *gin.Context) {
@@ -403,20 +409,20 @@ func LoginUser(ctx *gin.Context) {
 	if err := res.Unmarshal(&faunaToken); err != nil {
 		log.Fatalf("failed to Unmarshal data")
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+
+	fmt.Println(faunaToken)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
 		"Issuer": result.Id,
-		"token":  faunaToken,
+		"token":  faunaToken.Secret,
 		"exp":    time.Now().Add(time.Hour * 1).Unix(),
 	})
 
-	tokenString, err := token.SignedString(rsaPrivateKey)
-
+	tokenString, err := token.SignedString(ecdsaPrivateKey)
 	if err != nil {
 		panic(err)
 	}
 
-	ctx.SetCookie("jwt_token", tokenString, 3600, "/Page/api/main", "localhost", false, true)
-
-	ctx.JSON(http.StatusOK, gin.H{"token": tokenString})
-	ctx.JSON(http.StatusAccepted, token)
+	ctx.SetCookie("jwt_token", tokenString, 3600, "/dashboard", "localhost", false, true)
+	ctx.JSON(http.StatusAccepted, tokenString)
 }

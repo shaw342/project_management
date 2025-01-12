@@ -5,9 +5,11 @@ collection Projects {
     unique [.Id]
 
     Id: String
-    Name: String?
+    Name: String
+    Description: String?
     Owner: Ref<Owner>
-    Tasks: Array<Ref<Task>>
+    Tasks: Array<Ref<Task>>?
+    Teams: Array<Ref<Team>>?
 
     index byName {
     terms [.Name]
@@ -18,6 +20,10 @@ collection Projects {
     }
 }
 
+collection Room{}
+
+collection Message{}
+
 collection Task {
     unique [.Id]
 
@@ -26,7 +32,7 @@ collection Task {
     Description: String
     CreatedAt: Time = Time.now()
     UpdatedAt: Time = Time.now()
-    AssignTo: Array<Ref<User>>
+    AssignTo: Ref<User>
 
 
     index byTaskId{
@@ -46,6 +52,7 @@ collection User {
     Email: String?
     FirstName: String?
     LastName: String?
+    Tasks: Array<Ref<Task>>?
 
     index byName {
         terms [.FirstName]

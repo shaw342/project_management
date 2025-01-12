@@ -1,4 +1,5 @@
 role Owner {
+  membership Owner
   privileges User {
     create
     delete
@@ -30,6 +31,15 @@ role Owner {
     write
     create_with_id
     history_read
+  }
+  privileges Owner {
+    read
+    write
+    create_with_id
+    history_read
+  }
+  privileges CreateProject {
+    call
   }
 }
 
@@ -81,16 +91,17 @@ role User {
   privileges Database {
     read
   }
-  privileges User {
-    read
-  }
   privileges LoginUser {
     call
   }
   privileges LogoutUser {
     call
   }
-  membership User {
-    predicate ((user) => false)
+  membership User 
+  privileges User {
+    read
+    write
+    create_with_id
+    history_read
   }
 }

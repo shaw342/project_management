@@ -29,15 +29,20 @@ collection Task {
 
     Id: String
     Name: String
-    Description: String
+    Description: String?
+    Importance: "Low" | "Medium" | "High"
     CreatedAt: Time = Time.now()
+    StartDate: String
+    Endate: String
     UpdatedAt: Time = Time.now()
-    AssignTo: Ref<User>
+    Assignee: Ref<User>
+    Status: "Not Started" | "In Progress" | "Completed"
 
 
     index byTaskId{
         terms [.Id]
     }
+
 
     index byTaskName {
         terms [.Name]
@@ -48,11 +53,12 @@ collection User {
     unique [.Id]
     unique [.Email]
 
-    Id: String?
-    Email: String?
-    FirstName: String?
-    LastName: String?
+    Id: String
+    Email: String
+    FirstName: String
+    LastName: String
     Tasks: Array<Ref<Task>>?
+    AccessLevel: "Staff" | "Owner" | "User" = "User"
 
     index byName {
         terms [.FirstName]

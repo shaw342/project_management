@@ -1,5 +1,11 @@
 role Owner {
   membership Owner
+
+
+  membership User{
+    predicate (user => user.AccessLevel == "Owner")
+  }
+  
   privileges User {
     create
     delete
@@ -24,7 +30,7 @@ role Owner {
     create_with_id
     history_read
   }
-  privileges Role {
+  privileges Team {
     create
     delete
     read
@@ -32,12 +38,7 @@ role Owner {
     create_with_id
     history_read
   }
-  privileges Owner {
-    read
-    write
-    create_with_id
-    history_read
-  }
+  
   privileges CreateProject {
     call
   }
@@ -82,22 +83,17 @@ role User {
     write
     create_with_id
   }
-  privileges Role {
-    read
-  }
-  privileges Key {
-    read
-  }
-  privileges Database {
-    read
-  }
+
   privileges LoginUser {
     call
   }
+
   privileges LogoutUser {
     call
   }
-  membership User 
+
+  membership User
+  
   privileges User {
     read
     write

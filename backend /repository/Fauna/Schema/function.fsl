@@ -18,27 +18,8 @@ function LogoutUser() {
   Query.token()!.delete()
 }
 
-
 @role("server")
-function UserSignup(Id,FirstName,LastName,Email,Password) {
-  let user = User.create({
-    Id:Id,
-    FirstName:FirstName,
-    LastName:LastName,
-    Email: Email
-  })
-
- 
-  let credential = Credential.create({
-    document: user,
-    password: Password
-  })
-
-  Object.assign({ }, credential)
-}
-
-@role("server")
-function OwnerSignup(Id,FirstName,LastName,Email,Password) {
+function CreateOwner(Id,FirstName,LastName,Email,Password) {
   let owner = Owner.create({
     Id:Id,
     FirstName:FirstName,
@@ -47,12 +28,17 @@ function OwnerSignup(Id,FirstName,LastName,Email,Password) {
 
   })
 
- 
-  let credential = Credential.create({
-    document: owner,
-    password: Password
-  })
+  Token.create(
+    {
+      document: owner
+    }
+  )
 
- 
-  Object.assign({ }, credential)
+  Token
+}
+
+@role("server")
+function CreateTask(data)
+{
+  Task.create(data);
 }

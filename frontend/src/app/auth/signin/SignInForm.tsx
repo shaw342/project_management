@@ -7,8 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { User, Mail, Lock } from 'lucide-react'
+import { setCookie } from 'cookies-next'
 import axios from 'axios'
 import { error, log } from 'console'
+
+
 export default function SignInForm() {
   const [user, setUser] = useState({
     firstName: '',
@@ -33,13 +36,13 @@ export default function SignInForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Données du formulaire:', user)
     axios.defaults.headers.post["Content-Type"] = "application/json"
 
     axios.post("http://localhost:8080/api/v1/register",user)
     .then(res => {
       console.log(res.data);
-      router.push("/auth/signup")
+      setCookie("email",res.data["email"])
+      router.push("/auth/signin/verification")
     }).catch(error => {
       console.error("Error fetching data",error)
     })

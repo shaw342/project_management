@@ -15,6 +15,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	verification "github.com/shaw342/projet_argile/backend/Verification"
 	"github.com/shaw342/projet_argile/backend/model"
 )
 
@@ -30,6 +31,7 @@ var ecdsaPrivateKey *ecdsa.PrivateKey
 
 func Register(ctx *gin.Context) {
 	client := NewFaunaClient()
+
 	user := model.User{}
 
 	if err := ctx.BindJSON(&user); err != nil {
@@ -38,14 +40,10 @@ func Register(ctx *gin.Context) {
 	}
 
 	if user.FirstName == "" || user.LastName == "" || user.Email == "" || user.Password == "" {
-		fmt.Print(user)
 		log.Fatal("all field is not completed")
 	}
 
-	fmt.Println(user.FirstName)
-
 	user.Id = uuid.New().String()
-
 	createUser, err := fauna.FQL(`UserSignup(${Id},${FirstName},${LastName},${Email},${Password})`, map[string]any{"Id": user.Id, "FirstName": user.FirstName, "LastName": user.LastName, "Email": user.Email, "Password": user.Password})
 
 	if err != nil {
@@ -59,6 +57,21 @@ func Register(ctx *gin.Context) {
 
 	ctx.JSON(201, res.Data)
 
+}
+
+func SendMail(ctx *gin.Context) {
+	email := model.User{}
+	if err := ctx.ShouldBindJSON(&email); err != nil {
+		log.Fatal(err)
+	}
+
+	result, err := verification.SendMail(email.Email)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusAccepted, result)
 }
 
 func CreateTask(ctx *gin.Context) {
@@ -102,10 +115,12 @@ func CreateProject(ctx *gin.Context) {
 		return
 	}
 
-	createProject, err := fauna.FQL("Projects.create(${project})", map[string]any{"project": project})
+	project.Id = uuid.NewString()
+
+	createProject, err := fauna.FQL("CreateProjects(${project})", map[string]any{"project": project})
 
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	res, err := client.Query(createProject)
@@ -116,7 +131,7 @@ func CreateProject(ctx *gin.Context) {
 	var scout model.Project
 
 	if err := res.Unmarshal(&scout); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	fmt.Println(scout.Name)
@@ -190,7 +205,7 @@ func Welcome(ctx *gin.Context) {
 	if err := res.Unmarshal(&user); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(user)
+
 	ctx.JSON(http.StatusOK, user)
 }
 
@@ -218,6 +233,7 @@ func UpdateProject(ctx *gin.Context) {
 	ctx.JSON(200, newProject.Name)
 
 }
+
 func UpdateTasks(ctx *gin.Context) {
 	token := ctx.MustGet("token").(string)
 	client := fauna.NewClient(token, fauna.DefaultTimeouts())
@@ -415,4 +431,24 @@ func LoginUser(ctx *gin.Context) {
 
 	ctx.SetCookie("jwt_token", tokenString, 3600, "/dashboard", "localhost", false, true)
 	ctx.JSON(http.StatusAccepted, tokenString)
+}
+
+func Logout(ctx *gin.Context) {
+	token := ctx.MustGet("token").(string)
+	client := fauna.NewClient(token, fauna.DefaultTimeouts())
+
+	query, err := fauna.FQL("LogoutUser()", map[string]any{})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, err := client.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusAccepted, res)
+
 }

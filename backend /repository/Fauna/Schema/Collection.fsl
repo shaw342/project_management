@@ -59,6 +59,7 @@ collection User {
     LastName: String
     Tasks: Array<Ref<Task>>?
     AccessLevel: "Staff" | "Owner" | "User" = "User"
+    Status: "active" | "inactive"
 
     index byName {
         terms [.FirstName]

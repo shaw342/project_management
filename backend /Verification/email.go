@@ -1,26 +1,57 @@
 package verification
 
 import (
-	"github.com/wneessen/go-mail"
-	"log"
+	"fmt"
+	"math/rand"
+	"net/smtp"
+	"os"
+	"time"
+
+	"github.com/joho/godotenv"
 )
 
-func SendMail(email string) {
-	m := mail.NewMsg()
-	if err := m.From("toni.sender@example.com"); err != nil {
-		log.Fatalf("failed to set From address: %s", err)
+const letter = "azertyuiopqsdfghjklmwxcvbn"
+
+func SendMail(email string) (string, error) {
+	er := godotenv.Load()
+	if er != nil {
+		panic(er)
 	}
-	if err := m.To("tina.recipient@example.com"); err != nil {
-		log.Fatalf("failed to set To address: %s", err)
+
+	from := os.Getenv("EMAIL")
+	password := os.Getenv("PASSWORD")
+
+	to := []string{
+		email,
 	}
-	m.Subject("This is my first mail with go-mail!")
-	m.SetBodyString(mail.TypeTextPlain, "Do you like this mail? I certainly do!")
-	c, err := mail.NewClient("smtp.example.com", mail.WithPort(25), mail.WithSMTPAuth(mail.SMTPAuthPlain),
-		mail.WithUsername("my_username"), mail.WithPassword("extremely_secret_pass"))
+
+	rand.NewSource((time.Now().UnixNano()))
+
+	length := 10
+
+	randomString := generateRandomString(length)
+
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+
+	message := []byte("This is your code :" + randomString)
+
+	auth := smtp.PlainAuth("", from, password, smtpHost)
+
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, message)
 	if err != nil {
-		log.Fatalf("failed to create mail client: %s", err)
+		fmt.Println(err)
+		return "", err
 	}
-	if err := c.DialAndSend(m); err != nil {
-		log.Fatalf("failed to send mail: %s", err)
+	fmt.Println("Email Sent Successfully!")
+
+	return "Email sent Successfully", nil
+}
+
+func generateRandomString(length int) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = letter[rand.Intn(len(letter))]
 	}
+	return string(b)
 }

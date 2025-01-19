@@ -30,37 +30,53 @@ func NewFaunaClient() *fauna.Client {
 var ecdsaPrivateKey *ecdsa.PrivateKey
 
 func Register(ctx *gin.Context) {
+
 	client := NewFaunaClient()
 
 	user := model.User{}
 
 	if err := ctx.BindJSON(&user); err != nil {
-		ctx.JSON(404, ctx.Errors)
-		return
+		log.Fatal(err)
 	}
 
 	if user.FirstName == "" || user.LastName == "" || user.Email == "" || user.Password == "" {
 		log.Fatal("all field is not completed")
 	}
 
-	user.Id = uuid.New().String()
-	createUser, err := fauna.FQL(`UserSignup(${Id},${FirstName},${LastName},${Email},${Password})`, map[string]any{"Id": user.Id, "FirstName": user.FirstName, "LastName": user.LastName, "Email": user.Email, "Password": user.Password})
+	user.ID = uuid.New().String()
+
+	user.AccessLevel = "User"
+
+	user.Status = "inactive"
+
+	createUser, err := fauna.FQL(`UserSignup(${Id},${Email},${Password},${FirstName},${LastName},${AccessLevel},${Status})`,
+		map[string]any{"Id": user.ID, "Email": user.Email, "Password": user.Password, "FirstName": user.FirstName, "LastName": user.LastName, "AccessLevel": user.AccessLevel, "Status": user.Status})
 
 	if err != nil {
-		log.Fatal(err)
+		ctx.JSON(http.StatusNotModified, gin.H{"error": err})
+		return
 	}
 
 	res, err := client.Query(createUser)
+
 	if err != nil {
-		panic(err)
+		ctx.JSON(http.StatusConflict, gin.H{"error": err})
+		return
+	}
+	var result model.User
+
+	if err := res.Unmarshal(&result); err != nil {
+		log.Fatal(err)
 	}
 
-	ctx.JSON(201, res.Data)
+	ctx.JSON(201, result)
 
 }
 
-func SendMail(ctx *gin.Context) {
+func EmailVerfication(ctx *gin.Context) {
 	email := model.User{}
+	client := NewFaunaClient()
+
 	if err := ctx.ShouldBindJSON(&email); err != nil {
 		log.Fatal(err)
 	}
@@ -71,12 +87,66 @@ func SendMail(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	ctx.JSON(http.StatusAccepted, result)
+	data := map[string]any{
+		"Email": email.Email,
+		"Code":  result,
+	}
+
+	query, err := fauna.FQL("CodeForMail.create(${data})", map[string]any{"data": data})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, err := client.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusAccepted, res.Data)
+}
+
+func CodeVerification(ctx *gin.Context) {
+	client := NewFaunaClient()
+	codeEmail := model.CodeEmail{}
+
+	if err := ctx.ShouldBindJSON(&codeEmail); err != nil {
+		ctx.JSON(404, err)
+		return
+	}
+
+	query, err := fauna.FQL(`CodeForMail.byEmail(${email}).first()`, map[string]any{"email": codeEmail.Email})
+
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "error syntax"})
+		return
+	}
+
+	res, err := client.Query(query)
+
+	if err != nil {
+		ctx.JSON(400, gin.H{"error": "error run query"})
+		return
+	}
+
+	var result model.CodeEmail
+
+	if err := res.Unmarshal(&result); err != nil {
+		ctx.JSON(400, gin.H{"error": "error to Unmarshal"})
+		return
+	}
+	if result.Code != codeEmail.Code {
+		ctx.JSON(404, gin.H{"error": "the code is incorrect"})
+	}
+
+	ctx.JSON(201, gin.H{"success": "the code is correct"})
 }
 
 func CreateTask(ctx *gin.Context) {
-	token := ctx.MustGet("token").(string)
-	client := fauna.NewClient(token, fauna.DefaultTimeouts())
+	//token := ctx.MustGet("token").(string)
+	//client := fauna.NewClient(token, fauna.DefaultTimeouts())
+	client := NewFaunaClient()
 	task := model.Task{}
 
 	if err := ctx.ShouldBindJSON(&task); err != nil {
@@ -85,6 +155,7 @@ func CreateTask(ctx *gin.Context) {
 	}
 
 	task.Id = uuid.NewString()
+
 	createTask, err := fauna.FQL(`Task.create(${task})`, map[string]any{"task": task})
 
 	if err != nil {
@@ -105,6 +176,31 @@ func CreateTask(ctx *gin.Context) {
 	ctx.JSON(200, scout)
 }
 
+/*
+	func getUser(name string) (model.User, error) {
+		client := NewFaunaClient()
+
+		query, err := fauna.FQL("User.byName(${name})", map[string]any{"name": name})
+
+		if err != nil {
+			return model.User{}, err
+		}
+
+		res, err := client.Query(query)
+
+		if err != nil {
+			return model.User{}, err
+		}
+
+		var user model.User
+
+		if err := res.Unmarshal(&user); err != nil {
+			return model.User{}, err
+		}
+
+		return user, nil
+	}
+*/
 func CreateProject(ctx *gin.Context) {
 	token := ctx.MustGet("token").(string)
 	client := fauna.NewClient(token, fauna.DefaultTimeouts())
@@ -350,6 +446,7 @@ func GetUserByEmail(ctx *gin.Context) {
 
 	ctx.JSON(200, user)
 }
+
 func init() {
 
 	keyData, err := os.ReadFile("ecdsa_private_key.pem")
@@ -419,7 +516,7 @@ func LoginUser(ctx *gin.Context) {
 	fmt.Println(faunaToken)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
-		"Issuer": result.Id,
+		"Issuer": result.ID,
 		"token":  faunaToken.Secret,
 		"exp":    time.Now().Add(time.Hour * 1).Unix(),
 	})

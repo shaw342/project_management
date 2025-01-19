@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Task, TaskItem } from './task-item'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,10 +8,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { format, parse, isValid } from 'date-fns'
+import axios from 'axios'
+import { error, log } from 'console'
+import { id } from 'date-fns/locale'
 
 export function DetailedTaskSection() {
   const [tasks, setTasks] = useState<Task[]>([])
-  const [newTask, setNewTask] = useState<Omit<Task, 'id'>>({
+  const [newTask, setNewTask] = useState<Task>({
+    id:0,
     name: '',
     description: '',
     importance: 'Medium',
@@ -25,9 +29,20 @@ export function DetailedTaskSection() {
 
   const addTask = (e: React.FormEvent) => {
     e.preventDefault()
-    if (newTask.name.trim() && newTask.assignee.trim()) {
-      setTasks([...tasks, { ...newTask, id: Date.now() }])
+
+    axios.post("http://localhost:8080/api/v1/task",newTask).then(res => {
+      console.log(res.data)
+      newTask.id = res.data["Id"]
+    }).catch(error =>{
+      console.log('====================================');
+      console.log(error);
+      console.log('====================================');
+    })
+
+    if (newTask.name.trim()) {
+      setTasks([...tasks, { ...newTask, id: newTask.id}])
       setNewTask({
+        id:0,
         name: '',
         description: '',
         importance: 'Medium',
@@ -39,6 +54,10 @@ export function DetailedTaskSection() {
       })
     }
   }
+
+  console.log('====================================');
+  console.log(tasks);
+  console.log('====================================');
 
   const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
     const date = parse(value, 'yyyy-MM-dd', new Date())
@@ -79,11 +98,7 @@ export function DetailedTaskSection() {
               value={newTask.description}
               onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
             />
-            <Input
-              placeholder="Assignee"
-              value={newTask.assignee}
-              onChange={(e) => setNewTask({ ...newTask, assignee: e.target.value })}
-            />
+            
             <Select
               value={newTask.importance}
               onValueChange={(value: Task['importance']) => setNewTask({ ...newTask, importance: value })}
@@ -150,4 +165,3 @@ export function DetailedTaskSection() {
     </div>
   )
 }
-

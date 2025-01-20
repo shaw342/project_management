@@ -110,9 +110,10 @@ func EmailVerfication(ctx *gin.Context) {
 func CodeVerification(ctx *gin.Context) {
 	client := NewFaunaClient()
 	codeEmail := model.CodeEmail{}
+	var user model.User
 
 	if err := ctx.ShouldBindJSON(&codeEmail); err != nil {
-		ctx.JSON(404, err)
+		ctx.JSON(404, gin.H{"error": "error to bind json"})
 		return
 	}
 
@@ -136,10 +137,42 @@ func CodeVerification(ctx *gin.Context) {
 		ctx.JSON(400, gin.H{"error": "error to Unmarshal"})
 		return
 	}
+
 	if result.Code != codeEmail.Code {
 		ctx.JSON(404, gin.H{"error": "the code is incorrect"})
 	}
 
+	delete := fmt.Sprintf(`CodeForMail.byEmail("%s").first()!.delete()`, result.Email)
+
+	deleteQuery, err := fauna.FQL(delete, nil)
+
+	if err != nil {
+		ctx.JSON(400, gin.H{"erorro": "error for query delete mail"})
+	}
+
+	deleteDocument, err := client.Query(deleteQuery)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Print(deleteDocument)
+
+	user.Status = "active"
+
+	updateStatus, err := fauna.FQL(`UpdateUserStatus(${email},${status})`, map[string]any{"email": result.Email, "status": user.Status})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	update, err := client.Query(updateStatus)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Print(update)
 	ctx.JSON(201, gin.H{"success": "the code is correct"})
 }
 

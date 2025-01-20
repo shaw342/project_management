@@ -1,4 +1,4 @@
-import { Calendar, Home, Inbox, Search, Settings,ListTodo, ChevronUp, User2,NotebookPen, MessageCircle } from "lucide-react"
+import {Hourglass,Calendar, Home, Inbox, Search, Settings,ListTodo, ChevronUp, User2,NotebookPen, MessageCircle,FolderRoot, icons } from "lucide-react"
 
 import {
   Sidebar,
@@ -14,6 +14,7 @@ import {
 
 import { RiTeamLine } from "react-icons/ri";
 import { title } from "process";
+import { url } from "inspector";
 
 // Menu items.
 const items = [
@@ -24,17 +25,22 @@ const items = [
   },
   {
     title: "Inbox",
-    url: "#",
+    url: "/dashboard/inbox",
     icon: Inbox,
   },
   {
     title: "Calendar",
-    url: "#",
+    url: "/dashboard/calendar",
     icon: Calendar,
   },
   {
+    title: "Projects",
+    url:"/dashboard/project",
+    icon:FolderRoot,
+  },
+  {
     title: "Task",
-    url: "/dashboard/tasks",
+    url: `/dashboard/project/tasks`,
     icon: ListTodo,
   },
   {
@@ -45,25 +51,32 @@ const items = [
   },
   {
     title:"Teams",
-    url:"#",
+    url:"/dashboard/team",
     icon:RiTeamLine
   },
   {
     title:"Chat",
-    url:"#",
+    url:"/dashboard/chat",
     icon:MessageCircle
+  },
+  {
+    title:"TimeBox",
+    url:"/dashboard/timebox",
+    icon:Hourglass
   }
 ]
 
+
 export function AppSidebar() {
   return (
-    <Sidebar variant="inset">
+    <Sidebar collapsible="icon" >
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
+              
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <a href={item.url}>

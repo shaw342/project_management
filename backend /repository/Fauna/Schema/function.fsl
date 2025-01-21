@@ -42,3 +42,30 @@ function CreateTask(data)
 {
   Task.create(data);
 }
+
+@role("server")
+function UserSignup(Id,Email,Password,FirstName,LastName,AccessLevel,Status) {
+  let user = User.create(
+  {
+    Id:Id,
+    Email:Email,
+    FirstName:FirstName,
+    LastName:LastName,
+    AccessLevel:AccessLevel,
+    Status:Status,
+  }
+  )
+
+  let credential = Credential.create({
+    document: user,
+    password: Password,
+  })
+
+  
+  Object.assign({ },user)
+}
+
+function UpdateUserStatus(email,status) {
+  let emailCode = User.byEmail(email).first()!.updateData({Status:status})
+  emailCode
+}

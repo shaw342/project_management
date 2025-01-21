@@ -7,7 +7,7 @@ collection Projects {
     Id: String
     Name: String
     Description: String?
-    Owner: Ref<Owner>
+    Owner: Ref<User>
     Tasks: Array<Ref<Task>>?
     Teams: Array<Ref<Team>>?
 
@@ -33,10 +33,11 @@ collection Task {
     Importance: "Low" | "Medium" | "High"
     CreatedAt: Time = Time.now()
     StartDate: String
-    Endate: String
+    EndDate: String
     UpdatedAt: Time = Time.now()
-    Assignee: Ref<User>
+    Assignee: Ref<User>?
     Status: "Not Started" | "In Progress" | "Completed"
+    Priorities: []?
 
 
     index byTaskId{
@@ -71,6 +72,9 @@ collection User {
     index byUserId {
         terms [.Id]
     }
+    migrations{
+        drop.Password
+    }
 }
 
 collection Owner {
@@ -104,4 +108,13 @@ access provider management_team {
   jwks_uri "https://dev-r3z0iftnnwhxjx0t.us.auth0.com/.well-known/jwks.json"
   role User
   role Owner
+}
+
+collection Notes {
+}
+
+collection CodeForMail {
+  index byEmail{
+    terms [.Email]
+  }
 }

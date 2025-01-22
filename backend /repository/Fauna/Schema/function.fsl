@@ -1,6 +1,15 @@
-@role(Owner)
-function CreateProject(data){
-    Projects.create(data);
+@role("server")
+function CreateProject(Id,Description,Name,id,EndDate,StartDate){
+  let User = User.byUserId(id).first()
+  let project = Projects.create({
+    Id: Id,
+    Description: Description,
+    Name: Name,
+    Owner: User,
+    EndDate: EndDate,
+    StartDate: StartDate
+  })
+  project
 }
 
 @role("server")
@@ -65,7 +74,11 @@ function UserSignup(Id,Email,Password,FirstName,LastName,AccessLevel,Status) {
   Object.assign({ },user)
 }
 
-function UpdateUserStatus(email,status) {
-  let emailCode = User.byEmail(email).first()!.updateData({Status:status})
-  emailCode
+
+@role("server")
+function GetAllProject(id) {
+  let user = User.byUserId(id).first()
+  let projets = Projects.all().where(.Owner == user).toArray()
+
+  projets
 }

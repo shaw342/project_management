@@ -1,8 +1,15 @@
+"use client"
 import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, UsersIcon, CheckSquareIcon, Trash2Icon, EditIcon } from 'lucide-react'
 import { Project } from '@/components/types'
+import axios from 'axios'
+import { useEffect, useState } from 'react'
+import { getCookie } from 'cookies-next/client'
+
+import useSWR from 'swr'
+import { log } from 'console'
 
 interface ProjectListProps {
   projects: Project[];
@@ -10,7 +17,35 @@ interface ProjectListProps {
   onEditProject: (project: Project) => void;
 }
 
-export function ProjectList({ projects, onDeleteProject, onEditProject }: ProjectListProps) {
+export function ProjectList({ onDeleteProject, onEditProject }: ProjectListProps) {
+  const [projects, setProjects] = useState<Project[]>([])
+
+  const [token,setToken] = useState("")
+
+  useEffect(() => {
+    const cookieToken = getCookie("token") as string | undefined;
+    if (cookieToken) {
+      setToken(cookieToken);
+
+      axios.defaults.headers.common["Authorization"] = `Bearer ${cookieToken}`;
+    }
+  }, []);
+
+
+
+  axios.get("http://localhost:8080/api/v1/all/projects").then(res =>{
+    console.log(res.data)
+    if (res.data["tasks"] == undefined){
+      res.data["tasks"] = []
+    }
+    
+    setProjects(res.data)
+  }).catch(error =>{
+    console.log('====================================');
+    console.log(error);
+    console.log('====================================');
+  })
+
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {projects.map((project) => (
@@ -25,7 +60,7 @@ export function ProjectList({ projects, onDeleteProject, onEditProject }: Projec
                 <CalendarIcon className="mr-2 h-4 w-4 opacity-70" />
                 <span>
                   {project.startDate && project.endDate
-                    ? `Du ${project.startDate.toLocaleDateString()} au ${project.endDate.toLocaleDateString()}`
+                    ? `Du ${project.startDate} au ${project.endDate}`
                     : "Dates non définies"}
                 </span>
               </div>
@@ -35,7 +70,7 @@ export function ProjectList({ projects, onDeleteProject, onEditProject }: Projec
               </div>
               <div className="flex items-center">
                 <CheckSquareIcon className="mr-2 h-4 w-4 opacity-70" />
-                <span>{project.tasks.length} tâches</span>
+                <span>{project.tasks ? project.tasks.length : 0} tâches</span>
               </div>
             </div>
           </CardContent>

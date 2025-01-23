@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -8,12 +8,13 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Project, Owner, Task, Team } from '@/components/types'
+import axios from 'axios'
+import { getCookie } from 'cookies-next/client'
+import { redirect } from 'next/dist/server/api-utils'
+import { projectEntrypointsSubscribe } from 'next/dist/build/swc/generated-native'
 
 // Ces données devraient idéalement venir d'une API ou d'une base de données
-const mockOwners: Owner[] = [
-  { id: '1', name: 'Alice' },
-  { id: '2', name: 'Bob' },
-]
+
 
 const mockTasks: Task[] = [
   { id: '1', title: 'Conception', status: 'not-started' },
@@ -29,11 +30,35 @@ const mockTeams: Team[] = [
 export function CreateProjectForm({ onProjectCreated }: { onProjectCreated: (project: Project) => void }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [token,setToken] = useState("")
+  const [owner,setOwner] = useState<Owner>({
+    id:"",
+    name:"",
+    email:"",
+  })
   const [ownerId, setOwnerId] = useState('')
   const [selectedTasks, setSelectedTasks] = useState<string[]>([])
   const [selectedTeams, setSelectedTeams] = useState<string[]>([])
   const [startDate, setStartDate] = useState<Date | undefined>(undefined)
   const [endDate, setEndDate] = useState<Date | undefined>(undefined)
+
+
+  useEffect(() => {
+    const cookieToken = getCookie("token") as string | undefined;
+    if (cookieToken) {
+      setToken(cookieToken);
+
+      axios.defaults.headers.common["Authorization"] = `Bearer ${cookieToken}`;
+    }
+  }, []);
+
+  axios.get("http://localhost:8080/api/v1/user/get").then(res =>{
+    console.log(res.data);
+  }).catch(error =>{
+    console.log('====================================');
+    console.log(error);
+    console.log('====================================');
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -41,19 +66,42 @@ export function CreateProjectForm({ onProjectCreated }: { onProjectCreated: (pro
       alert("Veuillez sélectionner les dates de début et de fin.")
       return
     }
+
     const newProject: Project = {
-      id: Date.now().toString(),
+      id: "",
       name,
+      owner,
       description,
-      owner: mockOwners.find(owner => owner.id === ownerId) || mockOwners[0],
       tasks: mockTasks.filter(task => selectedTasks.includes(task.id)),
       teams: mockTeams.filter(team => selectedTeams.includes(team.id)),
       startDate,
       endDate
     }
-    onProjectCreated(newProject)
-    setName('')
-    setDescription('')
+
+    console.log(newProject.startDate);
+    
+    axios.post("http://localhost:8080/api/v1/project",newProject)
+    .then(res =>{
+      console.log('====================================');
+      console.log(res.data["id"]);
+      console.log('====================================');
+      console.log(res.data["name"]);
+      console.log('====================================');
+      newProject.id = res.data["id"]
+      onProjectCreated(res.data)
+      console.log('====================================');
+    }).catch(error => {
+      console.log('====================================');
+      console.log(error);
+      console.log('====================================');
+    })
+
+
+    setName(newProject.name)
+    console.log('====================================');
+    console.log(newProject);
+    console.log('====================================');
+    setDescription(newProject.description)
     setOwnerId('')
     setSelectedTasks([])
     setSelectedTeams([])
@@ -84,19 +132,6 @@ export function CreateProjectForm({ onProjectCreated }: { onProjectCreated: (pro
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-          </div>
-          <div className="space-y-2">
-            <label htmlFor="owner" className="text-sm font-medium">Propriétaire</label>
-            <Select onValueChange={setOwnerId} value={ownerId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un propriétaire" />
-              </SelectTrigger>
-              <SelectContent>
-                {mockOwners.map((owner) => (
-                  <SelectItem key={owner.id} value={owner.id}>{owner.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Tâches</label>

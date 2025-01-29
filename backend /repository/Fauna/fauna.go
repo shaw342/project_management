@@ -207,31 +207,6 @@ func CreateTask(ctx *gin.Context) {
 	ctx.JSON(200, scout)
 }
 
-/*
-	func getUser(name string) (model.User, error) {
-		client := NewFaunaClient()
-
-		query, err := fauna.FQL("User.byName(${name})", map[string]any{"name": name})
-
-		if err != nil {
-			return model.User{}, err
-		}
-
-		res, err := client.Query(query)
-
-		if err != nil {
-			return model.User{}, err
-		}
-
-		var user model.User
-
-		if err := res.Unmarshal(&user); err != nil {
-			return model.User{}, err
-		}
-
-		return user, nil
-	}
-*/
 func CreateProject(ctx *gin.Context) {
 	userId := ctx.MustGet("UserId")
 	client := NewFaunaClient()
@@ -243,9 +218,8 @@ func CreateProject(ctx *gin.Context) {
 	fmt.Println(project)
 
 	project.Id = uuid.New().String()
-	StringProject := fmt.Sprintf(`CreateProject("%s","%s","%s","%s")`, project.Id, project.Description, project.Name, userId)
 
-	createProject, err := fauna.FQL(StringProject, nil)
+	createProject, err := fauna.FQL(`CreateProject(${project},${userId})`, map[string]any{"project": project, "userId": userId})
 
 	if err != nil {
 		log.Fatal(err)
@@ -262,8 +236,6 @@ func CreateProject(ctx *gin.Context) {
 	if err := resProject.Unmarshal(&scout); err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println(scout.Name)
 
 	if err != nil {
 		log.Fatal("failed sign with project information")
@@ -321,7 +293,6 @@ func DeleteTask(ctx *gin.Context) {
 func Welcome(ctx *gin.Context) {
 	userId := ctx.MustGet("UserId")
 	token := ctx.MustGet("token").(string)
-	fmt.Print(userId)
 
 	client := fauna.NewClient(token, fauna.DefaultTimeouts())
 
@@ -354,18 +325,21 @@ func UpdateProject(ctx *gin.Context) {
 		panic(err)
 	}
 
-	query, _ := fauna.FQL(`Projects.byUserId(${Id}).first()!.update(${project})`, map[string]any{"Id": project.Id, "project": project})
+	fmt.Print(project)
+
+	query, _ := fauna.FQL(`Projects.byProjectId(${Id}).first()!.update(${project})`, map[string]any{"Id": project.Id, "project": project})
 
 	res, err := client.Query(query)
+
 	if err != nil {
 		panic(err)
 	}
 
 	var newProject model.Project
-
 	if err := res.Unmarshal(&newProject); err != nil {
 		panic(err)
 	}
+
 	ctx.JSON(200, newProject.Name)
 
 }
@@ -376,7 +350,7 @@ func UpdateTasks(ctx *gin.Context) {
 	task := model.Task{}
 
 	if err := ctx.ShouldBindJSON(&task); err != nil {
-		ctx.JSON(404, err)
+		log.Fatal(err)
 	}
 
 	query, _ := fauna.FQL(`Task.byName(${name}).first()!.update(${task})`, map[string]any{"Id": task.Id, "task": task})
@@ -397,21 +371,31 @@ func UpdateTasks(ctx *gin.Context) {
 }
 
 func GetUser(ctx *gin.Context) {
+	userId := ctx.MustGet("UserId")
 	client := NewFaunaClient()
-	data := model.User{}
-	if err := ctx.ShouldBindJSON(&data); err != nil {
-		panic(err)
+
+	getUserString := fmt.Sprintf(`User.byUserId("%s").first()`, userId)
+
+	query, err := fauna.FQL(getUserString, nil)
+
+	if err != nil {
+		log.Fatal(err)
 	}
-	query, _ := fauna.FQL(`User.byName(${name}).first()`, map[string]any{"name": data.FirstName})
 
-	res, _ := client.Query(query)
+	res, err := client.Query(query)
 
-	var scout model.Project
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(res.Data)
+
+	var scout model.User
 
 	if err := res.Unmarshal(&scout); err != nil {
 		ctx.JSON(404, err)
 	}
-	ctx.JSON(200, scout.Name)
+	ctx.JSON(200, scout)
 }
 
 func GetTask(ctx *gin.Context) {
@@ -440,8 +424,8 @@ func GetTask(ctx *gin.Context) {
 	ctx.JSON(200, task)
 }
 
-func GetALlProjects(ctx *gin.Context) {
-	UserId := ctx.MustGet("UserId").(string)
+func GetAllProjects(ctx *gin.Context) {
+	UserId := ctx.MustGet("UserId")
 	client := NewFaunaClient()
 
 	query, err := fauna.FQL("GetAllProject(${userId})", map[string]any{"userId": UserId})
@@ -456,19 +440,18 @@ func GetALlProjects(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	var AllProject model.Project
+	var AllProjects []model.Project
 
-	if err := res.Unmarshal(&AllProject); err != nil {
+	if err := res.Unmarshal(&AllProjects); err != nil {
 		log.Fatal(err)
 	}
-
-	ctx.JSON(200, AllProject)
+	fmt.Println(AllProjects)
+	ctx.JSON(200, AllProjects)
 }
 
 func GetProject(ctx *gin.Context) {
 	client := NewFaunaClient()
 	id := ctx.Param("id")
-	fmt.Println(id)
 	query, err := fauna.FQL(`Projects.byProjectId(${id}).first()`, map[string]any{"id": id})
 
 	if err != nil {
@@ -485,6 +468,8 @@ func GetProject(ctx *gin.Context) {
 	if err := res.Unmarshal(&result); err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Print(result)
 
 	ctx.JSON(200, result)
 
@@ -544,7 +529,7 @@ func LoginUser(ctx *gin.Context) {
 		log.Fatalf("fail to bind Json object")
 	}
 
-	userData, err := fauna.FQL("User.byEmail(${email}).first()", map[string]any{"email": user.Email})
+	userData, err := fauna.FQL("User.byEmail(${email}).map(.Id).first()", map[string]any{"email": user.Email})
 
 	if err != nil {
 		log.Fatal(err)
@@ -556,9 +541,9 @@ func LoginUser(ctx *gin.Context) {
 		log.Fatal("error to run query")
 	}
 
-	var result model.User
+	var Id string
 
-	if err := resUser.Unmarshal(&result); err != nil {
+	if err := resUser.Unmarshal(&Id); err != nil {
 		log.Fatal("error to Unmshal use data")
 	}
 
@@ -581,7 +566,7 @@ func LoginUser(ctx *gin.Context) {
 	fmt.Println(faunaToken)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
-		"Issuer": result.ID,
+		"Issuer": Id,
 		"token":  faunaToken.Secret,
 		"exp":    time.Now().Add(time.Hour * 1).Unix(),
 	})
@@ -613,4 +598,34 @@ func Logout(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusAccepted, res)
 
+}
+
+func CreateTeam(ctx *gin.Context) {
+	client := NewFaunaClient()
+
+	team := model.Team{}
+
+	if err := ctx.ShouldBindJSON(&team); err != nil {
+		log.Fatal(err)
+	}
+
+	query, err := fauna.FQL(`Team.create(${team})`, map[string]any{"team": team})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, err := client.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var Team model.Team
+
+	if err := res.Unmarshal(&team); err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{"successfull": Team})
 }

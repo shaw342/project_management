@@ -20,7 +20,6 @@ func main() {
 	config.AllowCredentials = true
 	r.Use(cors.New(config))
 
-	// Middleware pour vérifier l'hôte et ajouter des en-têtes de sécurité
 	expectedHost := "localhost:8080"
 	r.Use(func(c *gin.Context) {
 		log.Printf("Request Host: %s", c.Request.Host)
@@ -46,19 +45,23 @@ func main() {
 
 	v1 := r.Group("api/v1")
 	{
-		v1.POST("/welcome", Middleware.AuthMiddleware(), repository.Welcome)
+		v1.GET("/welcome", Middleware.AuthMiddleware(), repository.Welcome)
 		v1.POST("/login", repository.LoginUser)
 		v1.POST("/register", repository.Register)
-		v1.POST("/task", repository.CreateTask)
+		v1.POST("/task/:id", Middleware.AuthMiddleware(), repository.CreateTask)
 		v1.POST("/getUser", repository.GetUserByEmail)
-		v1.POST("/project", repository.CreateProject)
-		v1.DELETE("/deleteProject", repository.DeleteProject)
-		v1.DELETE("/deleteTask", repository.DeleteTask)
-		v1.PATCH("/updateProject", repository.UpdateProject)
-		v1.PATCH("/updateTask", repository.UpdateTasks)
-		v1.GET("/task/get", repository.GetTask)
-		v1.GET("/project/get", repository.GetProject)
-		v1.GET("/user/get", repository.GetUser)
+		v1.POST("/project", Middleware.AuthMiddleware(), repository.CreateProject)
+		v1.DELETE("/deleteProject", Middleware.AuthMiddleware(), repository.DeleteProject)
+		v1.DELETE("/deleteTask", Middleware.AuthMiddleware(), repository.DeleteTask)
+		v1.PATCH("/project/update", Middleware.AuthMiddleware(), repository.UpdateProject)
+		v1.PATCH("/updateTask", Middleware.AuthMiddleware(), repository.UpdateTasks)
+		v1.GET("/task/get", Middleware.AuthMiddleware(), repository.GetTask)
+		v1.GET("/project/:id", Middleware.AuthMiddleware(), repository.GetProject)
+		v1.GET("/user/get", Middleware.AuthMiddleware(), repository.GetUser)
+		v1.POST("/sendMail", Middleware.AuthMiddleware(), repository.EmailVerfication)
+		v1.POST("/verifycode", Middleware.AuthMiddleware(), repository.CodeVerification)
+		v1.GET("/all/projects", Middleware.AuthMiddleware(), repository.GetAllProjects)
+		v1.POST("/team/create", Middleware.AuthMiddleware(), repository.CreateTeam)
 	}
 
 	r.Run()

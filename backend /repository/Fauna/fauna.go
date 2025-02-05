@@ -445,7 +445,7 @@ func GetAllProjects(ctx *gin.Context) {
 	if err := res.Unmarshal(&AllProjects); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(AllProjects)
+
 	ctx.JSON(200, AllProjects)
 }
 
@@ -602,14 +602,15 @@ func Logout(ctx *gin.Context) {
 
 func CreateTeam(ctx *gin.Context) {
 	client := NewFaunaClient()
-
+	userId := ctx.MustGet("UserId").(string)
+	var Owner model.Owner
 	team := model.Team{}
 
 	if err := ctx.ShouldBindJSON(&team); err != nil {
 		log.Fatal(err)
 	}
 
-	query, err := fauna.FQL(`Team.create(${team})`, map[string]any{"team": team})
+	query, err := fauna.FQL(`createTeam(${team})`, map[string]any{"team": team})
 
 	if err != nil {
 		log.Fatal(err)
@@ -623,9 +624,61 @@ func CreateTeam(ctx *gin.Context) {
 
 	var Team model.Team
 
-	if err := res.Unmarshal(&team); err != nil {
+	if err := res.Unmarshal(&Team); err != nil {
 		log.Fatal(err)
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"successfull": Team})
+	owner, err := createOwner(userId, Team)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := owner.Unmarshal(&Owner); err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{"success": Team})
+}
+
+func createOwner(userId string, team model.Team) (fauna.QuerySuccess, error) {
+	client := NewFaunaClient()
+	var data model.Owner
+
+	query, err := fauna.FQL(`User.byUserId(${userId}).first()`, map[string]any{"userId": userId})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, err := client.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var userOwner model.User
+
+	if err := res.Unmarshal(&userOwner); err != nil {
+		log.Fatal(err)
+	}
+
+	data = model.Owner{
+		User: userOwner,
+		Team: []model.Team{team},
+	}
+
+	createOwner, err := fauna.FQL(`CreateOwner(${user})`, map[string]any{"user": data})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resOwner, err := client.Query(createOwner)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return *resOwner, nil
 }

@@ -603,14 +603,15 @@ func Logout(ctx *gin.Context) {
 func CreateTeam(ctx *gin.Context) {
 	client := NewFaunaClient()
 	userId := ctx.MustGet("UserId").(string)
-	var Owner model.Owner
 	team := model.Team{}
 
 	if err := ctx.ShouldBindJSON(&team); err != nil {
 		log.Fatal(err)
 	}
 
-	query, err := fauna.FQL(`createTeam(${team})`, map[string]any{"team": team})
+	team.Owner = userId
+
+	query, err := fauna.FQL("Team.create(${team})", map[string]any{"team": team})
 
 	if err != nil {
 		log.Fatal(err)
@@ -628,57 +629,38 @@ func CreateTeam(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	owner, err := createOwner(userId, Team)
+	owner, err := createOwner(userId, Team.Id)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := owner.Unmarshal(&Owner); err != nil {
-		log.Fatal(err)
-	}
+	fmt.Println(owner)
 
 	ctx.JSON(http.StatusCreated, gin.H{"success": Team})
 }
 
-func createOwner(userId string, team model.Team) (fauna.QuerySuccess, error) {
-	client := NewFaunaClient()
-	var data model.Owner
+func createOwner(userId string, teamId string) (model.Owner, error) {
 
-	query, err := fauna.FQL(`User.byUserId(${userId}).first()`, map[string]any{"userId": userId})
+	client := NewFaunaClient()
+
+	query, err := fauna.FQL("CreateOwner(${userId},${teamId})", map[string]any{"userId": userId, "teamId": teamId})
 
 	if err != nil {
-		log.Fatal(err)
+		return model.Owner{}, err
 	}
 
 	res, err := client.Query(query)
 
 	if err != nil {
-		log.Fatal(err)
+		return model.Owner{}, err
 	}
 
-	var userOwner model.User
+	var owner model.Owner
 
-	if err := res.Unmarshal(&userOwner); err != nil {
-		log.Fatal(err)
+	if err := res.Unmarshal(&owner); err != nil {
+		return model.Owner{}, err
 	}
 
-	data = model.Owner{
-		User: userOwner,
-		Team: []model.Team{team},
-	}
-
-	createOwner, err := fauna.FQL(`CreateOwner(${user})`, map[string]any{"user": data})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	resOwner, err := client.Query(createOwner)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return *resOwner, nil
+	return owner, nil
 }

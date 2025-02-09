@@ -635,6 +635,13 @@ func CreateTeam(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
+	accessLevel, err := updateUserAccessLevel("Owner", userId)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(accessLevel)
 	fmt.Println(owner)
 
 	ctx.JSON(http.StatusCreated, gin.H{"success": Team})
@@ -655,7 +662,6 @@ func createOwner(userId string, teamId string) (model.Owner, error) {
 	if err != nil {
 		return model.Owner{}, err
 	}
-
 	var owner model.Owner
 
 	if err := res.Unmarshal(&owner); err != nil {
@@ -663,4 +669,47 @@ func createOwner(userId string, teamId string) (model.Owner, error) {
 	}
 
 	return owner, nil
+}
+
+func updateUserAccessLevel(level string, userId string) (string, error) {
+	client := NewFaunaClient()
+
+	query, err := fauna.FQL(`User.byUserId(${userId}).updatedata({"AccessLevel":${level})`, map[string]any{"userId": userId, "level": level})
+
+	if err != nil {
+		return "", err
+	}
+
+	res, err := client.Query(query)
+
+	if err != nil {
+		return "", err
+	}
+
+	var user model.User
+
+	if err := res.Unmarshal(&user); err != nil {
+		return "", err
+	}
+
+	return user.AccessLevel, nil
+}
+
+func GetOwner(ctx *gin.Context) {
+	userId := ctx.MustGet("UserId").(string)
+	client := NewFaunaClient()
+
+	query, err := fauna.FQL("GetOwner(${userId})", map[string]any{"userId": userId})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, err := client.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(200, gin.H{"success": res})
 }

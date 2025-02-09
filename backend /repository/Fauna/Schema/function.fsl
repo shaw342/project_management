@@ -64,3 +64,11 @@ function UserSignup(Id,Email,Password,FirstName,LastName,AccessLevel,Status) {
   Object.assign({ },user)
 }
 
+@role("server")
+function GetOwner(userId) {
+  let user = Owner.where(.User.Id == userId).map(.User).first()
+  let team = Owner.where(.User.Id == userId).map(.Teams).first()
+
+  Object.assign({},{User:user,Team:team})
+}
+

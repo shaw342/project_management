@@ -1,14 +1,8 @@
 @role("server")
-function CreateProject(Id,Description,Name,id,EndDate,StartDate){
+function CreateProject(data,id){
   let User = User.byUserId(id).first()
-  let project = Projects.create({
-    Id: Id,
-    Description: Description,
-    Name: Name,
-    Owner: User,
-    EndDate: EndDate,
-    StartDate: StartDate
-  })
+  let project = Projects.create(data)
+  project.updateData({Owner: User})
   project
 }
 
@@ -28,15 +22,11 @@ function LogoutUser() {
 }
 
 @role("server")
-function CreateOwner(Id,FirstName,LastName,Email,Password) {
-  let owner = Owner.create({
-    Id:Id,
-    FirstName:FirstName,
-    LastName:LastName,
-    Email: Email,
-
-  })
-
+function CreateOwner(userId,teamId) {
+  let user = User.byUserId(userId).first()
+  let team = Team.byTeamId(teamId).first()
+  let owner = Owner.create({User:user,Teams:[team]})
+  
   Token.create(
     {
       document: owner
@@ -74,11 +64,3 @@ function UserSignup(Id,Email,Password,FirstName,LastName,AccessLevel,Status) {
   Object.assign({ },user)
 }
 
-
-@role("server")
-function GetAllProject(id) {
-  let user = User.byUserId(id).first()
-  let projets = Projects.all().where(.Owner == user).toArray()
-
-  projets
-}

@@ -65,10 +65,12 @@ function UserSignup(Id,Email,Password,FirstName,LastName,AccessLevel,Status) {
 }
 
 @role("server")
-function GetOwner(userId) {
-  let user = Owner.where(.User.Id == userId).map(.User).first()
-  let team = Owner.where(.User.Id == userId).map(.Teams).first()
+function CreateNotes(data) {
+  let user = User.byUserId(data["User"]).first()
+  let task = Task.byTaskId(data["Task"]).first()
+  
+  let notes = Object.assign({}, {Id:data["Id"],Content:data["Content"],Title:data["Title"],User:user,Task:task})
+  let result = Notes.create(data)
 
-  Object.assign({},{User:user,Team:team})
+  Object.assign({}, result)
 }
-

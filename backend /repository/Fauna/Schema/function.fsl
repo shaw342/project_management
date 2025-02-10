@@ -74,3 +74,11 @@ function CreateNotes(data) {
 
   Object.assign({}, result)
 }
+
+@role("server")
+function GetOwner(userId) {
+  let user = Owner.where(.User.Id == userId).map(.User).first()
+  let team = Owner.where(.User.Id == userId).map(.Teams).first()
+
+  Object.assign({},{User:user,Team:team})
+}

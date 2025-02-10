@@ -711,5 +711,32 @@ func GetOwner(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	ctx.JSON(200, gin.H{"success": res})
+	ctx.JSON(200, gin.H{"success": res.Data})
+}
+
+func CreateNotes(ctx *gin.Context) {
+	client := NewFaunaClient()
+	notes := model.Notes{}
+
+	if err := ctx.ShouldBindJSON(&notes); err != nil {
+		log.Fatal(err)
+	}
+
+	query, err := fauna.FQL(`createNotes(${notes})`, map[string]any{"notes": notes})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, err := client.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(200, res.Data)
+}
+
+func ()  {
+	
 }

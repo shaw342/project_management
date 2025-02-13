@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Task, fetchTasks, cn } from '@/lib/utils'
+import axios from 'axios'
+import { log } from 'console'
 
 type ViewType = 'month' | 'week' | 'day'
 
@@ -21,8 +23,21 @@ export function Calendar() {
   const [viewType, setViewType] = useState<ViewType>('week')
 
   useEffect(() => {
-    fetchTasks().then(setTasks)
+    const fetchTasks = async () => {
+      try {
+
+        const response = await axios.post("http:localhost:8080/api/v1/task/get/all")
+        setTasks(response.data)
+
+      } catch (error) {
+
+        console.log(error);
+        
+      }
+    }
+    fetchTasks()
   }, [])
+
 
   const onDateClick = (day: Date) => {
     setCurrentDate(day)

@@ -48,7 +48,8 @@ func main() {
 		v1.GET("/welcome", Middleware.AuthMiddleware(), repository.Welcome)
 		v1.POST("/login", repository.LoginUser)
 		v1.POST("/register", repository.Register)
-		v1.POST("/task/:id", Middleware.AuthMiddleware(), repository.CreateTask)
+		v1.POST("/task/create", Middleware.AuthMiddleware(), repository.CreateTask)
+		v1.POST("/task/:id", Middleware.AuthMiddleware(), repository.GetTask)
 		v1.POST("/getUser", repository.GetUserByEmail)
 		v1.POST("/project", Middleware.AuthMiddleware(), repository.CreateProject)
 		v1.DELETE("/deleteProject", Middleware.AuthMiddleware(), repository.DeleteProject)
@@ -62,6 +63,8 @@ func main() {
 		v1.POST("/verifycode", Middleware.AuthMiddleware(), repository.CodeVerification)
 		v1.GET("/all/projects", Middleware.AuthMiddleware(), repository.GetAllProjects)
 		v1.POST("/team/create", Middleware.AuthMiddleware(), repository.CreateTeam)
+		v1.POST("/team/all", Middleware.AuthMiddleware())
+		v1.GET("/owner/get", Middleware.AuthMiddleware(), repository.GetOwner)
 	}
 
 	r.Run()

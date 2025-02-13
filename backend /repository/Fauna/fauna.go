@@ -43,14 +43,14 @@ func Register(ctx *gin.Context) {
 		log.Fatal("all field is not completed")
 	}
 
-	user.ID = uuid.New().String()
+	user.Id = uuid.New().String()
 
 	user.AccessLevel = "User"
 
 	user.Status = "inactive"
 
 	createUser, err := fauna.FQL(`UserSignup(${Id},${Email},${Password},${FirstName},${LastName},${AccessLevel},${Status})`,
-		map[string]any{"Id": user.ID, "Email": user.Email, "Password": user.Password, "FirstName": user.FirstName, "LastName": user.LastName, "AccessLevel": user.AccessLevel, "Status": user.Status})
+		map[string]any{"Id": user.Id, "Email": user.Email, "Password": user.Password, "FirstName": user.FirstName, "LastName": user.LastName, "AccessLevel": user.AccessLevel, "Status": user.Status})
 
 	if err != nil {
 		ctx.JSON(http.StatusNotModified, gin.H{"error": err})
@@ -647,6 +647,31 @@ func CreateTeam(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"success": Team})
 }
 
+func checkOwnerExist(userId string) (bool, error) {
+	client := NewFaunaClient()
+
+	query, err := fauna.FQL("CheckOwnerExist(${userId})", map[string]any{"userId": userId})
+
+	if err != nil {
+		log.Fatal(err)
+
+	}
+
+	check, err := client.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var response bool
+
+	if err := check.Unmarshal(&response); err != nil {
+		log.Fatal(err)
+	}
+
+	return response, nil
+}
+
 func createOwner(userId string, teamId string) (model.Owner, error) {
 
 	client := NewFaunaClient()
@@ -735,8 +760,4 @@ func CreateNotes(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, res.Data)
-}
-
-func ()  {
-	
 }

@@ -296,7 +296,7 @@ func Welcome(ctx *gin.Context) {
 
 	client := fauna.NewClient(token, fauna.DefaultTimeouts())
 
-	query, err := fauna.FQL("User.byUserId(${userId}).first()", map[string]any{"userId": userId})
+	query, err := fauna.FQL("User.byId(${userId})", map[string]any{"userId": userId})
 
 	if err != nil {
 		log.Fatal(err)
@@ -629,20 +629,31 @@ func CreateTeam(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	owner, err := createOwner(userId, Team.Id)
+	checkOwner, err := checkOwnerExist(userId)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	accessLevel, err := updateUserAccessLevel("Owner", userId)
+	if !checkOwner {
+		owner, err := createOwner(userId, Team.Id)
 
-	if err != nil {
-		log.Fatal(err)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println(owner)
+
+		level, err := updateUserAccessLevel("Owner", userId)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if level == "Owner" {
+			fmt.Println("owner")
+		}
 	}
-
-	fmt.Println(accessLevel)
-	fmt.Println(owner)
 
 	ctx.JSON(http.StatusCreated, gin.H{"success": Team})
 }
@@ -702,19 +713,19 @@ func updateUserAccessLevel(level string, userId string) (string, error) {
 	query, err := fauna.FQL(`User.byUserId(${userId}).updatedata({"AccessLevel":${level})`, map[string]any{"userId": userId, "level": level})
 
 	if err != nil {
-		return "", err
+		log.Fatal(err)
 	}
 
 	res, err := client.Query(query)
 
 	if err != nil {
-		return "", err
+		log.Fatal(err)
 	}
 
 	var user model.User
 
 	if err := res.Unmarshal(&user); err != nil {
-		return "", err
+		log.Fatal(err)
 	}
 
 	return user.AccessLevel, nil
@@ -760,4 +771,36 @@ func CreateNotes(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, res.Data)
+}
+
+func Signup(ctx *gin.Context) {
+	client := NewFaunaClient()
+	user := model.User{}
+
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		log.Fatal(err)
+	}
+
+	user.Id = uuid.New().String()
+	user.AccessLevel = "User"
+
+	query, err := fauna.FQL("Signup(${user})", map[string]any{"user": user})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res, err := client.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var resultUser model.User
+
+	if err := res.Unmarshal(&user); err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{"result": resultUser})
 }

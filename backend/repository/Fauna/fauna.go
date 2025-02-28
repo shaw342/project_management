@@ -796,3 +796,34 @@ func DeleteTeam(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resQuery)
 }
+
+func UpdateTeam(ctx *gin.Context) {
+	token := ctx.MustGet("token").(string)
+	client := fauna.NewClient(token, fauna.DefaultTimeouts())
+
+	team := model.Team{}
+
+	if err := ctx.ShouldBindJSON(&team); err != nil {
+		log.Fatal(err)
+	}
+
+	query, err := fauna.FQL(`Team.byTeamId(${Id})`, map[string]any{"Id": team.Id})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resQuery, err := client.Query(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var newTeam model.Team
+
+	if err := resQuery.Unmarshal(&newTeam); err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusOK, newTeam)
+}

@@ -34,7 +34,7 @@ func Register(ctx *gin.Context) {
 
 	user := model.User{}
 
-	if err := ctx.BindJSON(&user); err != nil {
+	if err := ctx.ShouldBindJSON(&user); err != nil {
 		log.Fatal(err)
 	}
 
@@ -48,7 +48,9 @@ func Register(ctx *gin.Context) {
 
 	user.Status = "inactive"
 
+
 	createUser, err := fauna.FQL(`Signup(${value})`, map[string]any{"value": user})
+
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": err})
 		return
@@ -65,24 +67,21 @@ func Register(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	ctx.JSON(201, result)
+	serverResponse := emailVerfication(result.Email)
+
+	ctx.JSON(http.StatusCreated, serverResponse)
 }
 
-func EmailVerfication(ctx *gin.Context) {
-	email := model.User{}
+func emailVerfication(email string) (model.User){
 	client := NewFaunaClient()
 
-	if err := ctx.ShouldBindJSON(&email); err != nil {
-		log.Fatal(err)
-	}
-
-	result, err := verification.SendMail(email.Email)
+	result, err := verification.SendMail(email)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	data := map[string]any{
-		"Email": email.Email,
+		"Email": email,
 		"Code":  result,
 	}
 
@@ -96,7 +95,13 @@ func EmailVerfication(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	ctx.JSON(http.StatusAccepted, res.Data)
+	var serverResponse model.User
+
+	if err := res.Unmarshal(&serverResponse);err != nil{
+		log.Fatal(err)
+	}
+
+	return serverResponse
 }
 
 func CodeVerification(ctx *gin.Context) {
@@ -526,8 +531,6 @@ func LoginUser(ctx *gin.Context) {
 	if err := res.Unmarshal(&faunaToken); err != nil {
 		log.Fatalf("failed to Unmarshal data")
 	}
-
-	fmt.Println(faunaToken)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
 		"Issuer": Id,

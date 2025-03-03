@@ -201,7 +201,7 @@ func CreateProject(ctx *gin.Context) {
 	}
 	fmt.Println(project)
 
-	project.Id = uuid.New().String()
+	project.ProjectId = uuid.New().String()
 
 	createProject, err := fauna.FQL(`CreateProject(${project},${userId})`, map[string]any{"project": project, "userId": userId})
 	if err != nil {
@@ -307,7 +307,7 @@ func UpdateProject(ctx *gin.Context) {
 
 	fmt.Print(project)
 
-	query, _ := fauna.FQL(`Projects.byProjectId(${Id}).first()!.update(${project})`, map[string]any{"Id": project.Id, "project": project})
+	query, _ := fauna.FQL(`Projects.byProjectId(${Id}).first()!.update(${project})`, map[string]any{"Id": project.ProjectId, "project": project})
 
 	res, err := client.Query(query)
 	if err != nil {
@@ -521,7 +521,7 @@ func LoginUser(ctx *gin.Context) {
 	if err != nil {
 		log.Fatalf("error run query")
 	}
-	var faunaToken model.Token
+	var faunaToken model.Tokens
 
 	if err := res.Unmarshal(&faunaToken); err != nil {
 		log.Fatalf("failed to Unmarshal data")
@@ -698,7 +698,7 @@ func GetOwner(ctx *gin.Context) {
 
 func CreateNotes(ctx *gin.Context) {
 	client := NewFaunaClient()
-	notes := model.Notes{}
+	notes := model.Note{}
 
 	if err := ctx.ShouldBindJSON(&notes); err != nil {
 		log.Fatal(err)
@@ -719,13 +719,13 @@ func CreateNotes(ctx *gin.Context) {
 
 func UpdateNotes(ctx *gin.Context) {
 	client := NewFaunaClient()
-	notes := model.Notes{}
+	note := model.Note{}
 
-	if err := ctx.ShouldBindJSON(&notes); err != nil {
+	if err := ctx.ShouldBindJSON(&note); err != nil {
 		log.Fatal(err)
 	}
 
-	query, err := fauna.FQL(`UpdateNotes(${notes})`, map[string]any{"notes": notes})
+	query, err := fauna.FQL(`UpdateNotes(${notes})`, map[string]any{"notes": note})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -735,7 +735,7 @@ func UpdateNotes(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	var updateNotes model.Notes
+	var updateNotes model.Note
 
 	if err := resQuery.Unmarshal(&updateNotes); err != nil {
 		log.Fatal(err)
@@ -746,7 +746,7 @@ func UpdateNotes(ctx *gin.Context) {
 
 func DeleteNotes(ctx *gin.Context) {
 	client := NewFaunaClient()
-	notes := model.Notes{}
+	notes := model.Note{}
 
 	if err := ctx.ShouldBindJSON(&notes); err != nil {
 		log.Fatal(err)

@@ -1,7 +1,7 @@
 package model
 
 type Owner struct {
-	OwnerId   string    `json:"owner_id" fauna:"owner_id"`
+	Id        string    `json:"id" fauna:"id"`
 	FirstName string    `json:"firstName" fauna:"firstName"`
 	LastName  string    `json:"lastName" fauna:"lastName"`
 	Email     string    `json:"email" fauna:"email"`

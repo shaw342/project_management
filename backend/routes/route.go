@@ -6,12 +6,17 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/shaw342/projet_argile/backend/Middleware"
-	repository "github.com/shaw342/projet_argile/backend/repository/Fauna"
+	"github.com/shaw342/projet_argile/backend/config"
+	"github.com/shaw342/projet_argile/backend/controllers"
+	"github.com/shaw342/projet_argile/backend/service"
 )
 
-func SetupRouter() *gin.Engine{
+func SetupRouter() *gin.Engine {
 	r := gin.Default()
+	db := config.ConnectDB()
+	defer db.Close()
+	userService := service.NewUserService(db)
+	userController := controllers.NewUserController(userService)
 
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:8080", "http://localhost:3000"}
@@ -45,25 +50,8 @@ func SetupRouter() *gin.Engine{
 
 	v1 := r.Group("api/v1")
 	{
-		v1.GET("/welcome", Middleware.AuthMiddleware(), repository.Welcome)
-		v1.POST("/login", repository.LoginUser)
-		v1.POST("/register", repository.Register)
-		v1.POST("/task/create", Middleware.AuthMiddleware(), repository.CreateTask)
-		v1.POST("/task/:id", Middleware.AuthMiddleware(), repository.GetTask)
-		v1.POST("/getUser", repository.GetUserByEmail)
-		v1.POST("/project", Middleware.AuthMiddleware(), repository.CreateProject)
-		v1.DELETE("/project/delete", Middleware.AuthMiddleware(), repository.DeleteProject)
-		v1.DELETE("/task/delete", Middleware.AuthMiddleware(), repository.DeleteTask)
-		v1.PATCH("/project/update", Middleware.AuthMiddleware(), repository.UpdateProject)
-		v1.PATCH("/task/update", Middleware.AuthMiddleware(), repository.UpdateTasks)
-		v1.GET("/task/get", Middleware.AuthMiddleware(), repository.GetTask)
-		v1.GET("/project/:id", Middleware.AuthMiddleware(), repository.GetProject)
-		v1.GET("/user/get", Middleware.AuthMiddleware(), repository.GetUser)
-		v1.POST("/verifycode", Middleware.AuthMiddleware(), repository.CodeVerification)
-		v1.GET("/all/projects", Middleware.AuthMiddleware(), repository.GetAllProjects)
-		v1.POST("/team/create", Middleware.AuthMiddleware(), repository.CreateTeam)
-		v1.POST("/team/all", Middleware.AuthMiddleware())
-		v1.GET("/owner/get", Middleware.AuthMiddleware(), repository.GetOwner)
+
+		v1.POST("/register", userController.Register)
 	}
 
 	return r

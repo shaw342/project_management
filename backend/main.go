@@ -13,6 +13,7 @@ import (
 func main() {
 
 	router := routes.SetupRouter()
+
 	runMigration()
 
 	router.Run()

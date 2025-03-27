@@ -4,5 +4,6 @@ CREATE TABLE users(
     lastName VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL,
     password TEXT NOT NULL,
+    status VARCHAR(100) NOT NULL,
     createAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);

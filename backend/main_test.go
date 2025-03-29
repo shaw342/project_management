@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
 	"time"
 
 	verification "github.com/shaw342/projet_argile/backend/Verification"
@@ -17,7 +18,9 @@ import (
 )
 
 func TestRegister(t *testing.T) {
-	router := routes.SetupRouter()
+	db := config.ConnectDB()
+	defer db.Close()
+	router := routes.SetupRouter(db)
 	createat := time.DateOnly
 
 	user := model.User{
@@ -49,7 +52,9 @@ func TestRegister(t *testing.T) {
 }
 
 func TestCreateTask(t *testing.T) {
-	router := routes.SetupRouter()
+	db := config.ConnectDB()
+	defer db.Close()
+	router := routes.SetupRouter(db)
 
 	task := model.Task{
 		TaskId:  "1",
@@ -82,6 +87,7 @@ func TestCreateTask(t *testing.T) {
 
 func TestCheckUser(t *testing.T) {
 	db := config.ConnectDB()
+	defer db.Close()
 	userService := service.NewUserService(db)
 
 	email := "local@gmail.com"
@@ -105,4 +111,47 @@ func TestEmail(t *testing.T) {
 	}
 
 	assert.Equal(t, "localfv9efnv", result)
+}
+
+func TestGetUser(t *testing.T) {
+	db := config.ConnectDB()
+	defer db.Close()
+	router := routes.SetupRouter(db)
+
+	user := "local@gmail.com"
+
+	jsonData, err := json.Marshal(&user)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	w := httptest.NewRecorder()
+
+	req, err := http.NewRequest("POST", "http:localhost:8080/api/v1/user/get", bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusAccepted, w.Code)
+
+}
+
+func TestGetAllUser(t *testing.T) {
+	db := config.ConnectDB()
+	defer db.Close()
+	router := routes.SetupRouter(db)
+
+	req, err := http.NewRequest("GET", "http:localhost:8080/api/v1/user/get", bytes.NewBuffer(nil))
+
+	if err != nil {
+		t.Error(err)
+	}
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
 }

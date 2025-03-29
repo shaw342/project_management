@@ -33,7 +33,7 @@ func (s *UserService) CheckUser(email string) (bool, error) {
 
 	var result bool
 
-	queryString := "SELECT EXISTS(SELECT 1 FROM users WHERE firstname = $1)"
+	queryString := "SELECT EXISTS(SELECT 1 FROM users WHERE email = $1);"
 
 	err := s.db.QueryRow(queryString, email).Scan(&result)
 
@@ -42,4 +42,19 @@ func (s *UserService) CheckUser(email string) (bool, error) {
 	}
 
 	return result, nil
+}
+
+func (s *UserService) GetUser(email string) (model.User, error) {
+	var user model.User
+
+	queryString := "SELECT * FROM users WHERE email = $1"
+
+	err := s.db.QueryRow(queryString, email).Scan(&user)
+
+	if err != nil {
+
+		return model.User{}, err
+	}
+
+	return user, nil
 }

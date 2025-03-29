@@ -1,20 +1,20 @@
 package routes
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/shaw342/projet_argile/backend/config"
 	"github.com/shaw342/projet_argile/backend/controllers"
 	"github.com/shaw342/projet_argile/backend/service"
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter(db *sql.DB) *gin.Engine {
 	r := gin.Default()
-	db := config.ConnectDB()
-	defer db.Close()
+
+	gin.SetMode(gin.DebugMode)
 	userService := service.NewUserService(db)
 	userController := controllers.NewUserController(userService)
 
@@ -42,16 +42,14 @@ func SetupRouter() *gin.Engine {
 		c.Next()
 	})
 
-	r.GET("/", func(ctx *gin.Context) {
-		ctx.JSON(200, map[string]any{
-			"hello": "world",
-		})
-	})
-
 	v1 := r.Group("api/v1")
 	{
-
-		v1.POST("/register", userController.Register)
+		v1.POST("register", userController.Register)
+		v1.GET("welcome", userController.Welcome)
+		v1.PATCH("user/:id/update")
+		v1.DELETE("user/:id/delete")
+		v1.POST("check", userController.CheckUser)
+		v1.POST("user/get", userController.GetUser)
 	}
 
 	return r

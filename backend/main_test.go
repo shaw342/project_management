@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -126,13 +127,12 @@ func TestGetUser(t *testing.T) {
 		t.Error(err)
 	}
 
-	w := httptest.NewRecorder()
-
-	req, err := http.NewRequest("POST", "http:localhost:8080/api/v1/user/get", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/v1/user/get", bytes.NewBuffer(jsonData))
 
 	if err != nil {
 		t.Error(err)
 	}
+	w := httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusAccepted, w.Code)
@@ -144,7 +144,7 @@ func TestGetAllUser(t *testing.T) {
 	defer db.Close()
 	router := routes.SetupRouter(db)
 
-	req, err := http.NewRequest("GET", "http:localhost:8080/api/v1/user/get", bytes.NewBuffer(nil))
+	req, err := http.NewRequest("GET", "http://localhost:8080/api/v1/user/get", bytes.NewBuffer(nil))
 
 	if err != nil {
 		t.Error(err)
@@ -154,4 +154,33 @@ func TestGetAllUser(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestLogin(t *testing.T) {
+	db := config.ConnectDB()
+	defer db.Close()
+
+	router := routes.SetupRouter(db)
+
+	auth := model.Auth{
+		Password: "123456",
+		Email:    "local@gmail.com",
+	}
+
+	jsonData, err := json.Marshal(&auth)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/v1/login", bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusAccepted, w.Code)
 }

@@ -184,3 +184,35 @@ func TestLogin(t *testing.T) {
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusAccepted, w.Code)
 }
+
+func TestDeleteTask(t *testing.T) {
+	db := config.ConnectDB()
+	defer db.Close()
+
+	routers := routes.SetupRouter(db)
+
+	task := map[string]string{
+		"id": "1",
+	}
+
+	jsonData, err := json.Marshal(&task)
+
+	if err != nil {
+
+		t.Error(err)
+	}
+
+	req, err := http.NewRequest("DELETE", "http://localhost:8080/api/v1/task/delete", bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	w := httptest.NewRecorder()
+
+	routers.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	t.Log(w.Body)
+}

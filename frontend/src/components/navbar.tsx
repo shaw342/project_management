@@ -1,6 +1,6 @@
 "use client"
 
-import * as React from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Menu, X } from "lucide-react"
 
@@ -9,7 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 
 const navigationItems = [
   {
-    title: "Accueil",
+    title: "Home",
     href: "/",
   },
   {
@@ -17,11 +17,7 @@ const navigationItems = [
     href: "/services",
   },
   {
-    title: "Portfolio",
-    href: "/portfolio",
-  },
-  {
-    title: "À propos",
+    title: "About",
     href: "/about",
   },
   {
@@ -32,7 +28,7 @@ const navigationItems = [
 
 export function Navbar() {
   const isMobile = useIsMobile()
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
     <nav className="w-full border-b bg-background">
@@ -63,10 +59,10 @@ export function Navbar() {
         {!isMobile && (
           <div className="hidden md:flex md:items-center md:gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/auth/signup">Se connecter</Link>
+              <Link href="/auth/signup">Login</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link href="/auth/signin">S'inscrire</Link>
+              <Link href="/auth/signin">Sign in</Link>
             </Button>
           </div>
         )}
@@ -95,10 +91,10 @@ export function Navbar() {
             ))}
             <div className="flex flex-col gap-2 pt-3">
               <Button variant="ghost" size="sm" className="justify-start" asChild>
-                <Link href="/auth/login/signup">Se connecter</Link>
+                <Link href="/auth/login/signup">Login </Link>
               </Button>
               <Button size="sm" className="justify-start" asChild>
-                <Link href="/auth/signin">S'inscrire</Link>
+                <Link href="/auth/signin">Sign in</Link>
               </Button>
             </div>
           </div>

@@ -216,3 +216,36 @@ func TestDeleteTask(t *testing.T) {
 
 	t.Log(w.Body)
 }
+
+func TestCreateNote(t *testing.T) {
+	db := config.ConnectDB()
+	defer db.Close()
+
+	routers := routes.SetupRouter(db)
+
+	note := model.Note{
+		NoteId:  "1",
+		UserId:  "sifeifj",
+		Title:   "hello world",
+		Content: "dknfrwongvrjw",
+	}
+
+	jsonDate, err := json.Marshal(&note)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/v1/notes/create", bytes.NewBuffer(jsonDate))
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	w := httptest.NewRecorder()
+
+	routers.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+}

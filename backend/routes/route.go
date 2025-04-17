@@ -16,7 +16,9 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 
 	gin.SetMode(gin.DebugMode)
 	userService := service.NewUserService(db)
+	managerService := service.NewManagerService(db)
 	userController := controllers.NewUserController(userService)
+	managerController := controllers.NewMangerController(managerService)
 
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:8080", "http://localhost:3000"}
@@ -49,7 +51,9 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 		v1.PATCH("user/:id/update")
 		v1.DELETE("user/:id/delete")
 		v1.POST("check", userController.CheckUser)
-		v1.POST("user/get", userController.GetUser)
+		v1.GET("user/get", userController.GetUser)
+		v1.POST("login", userController.Login)
+		v1.POST("task/create", managerController.CreateTask)
 	}
 
 	return r

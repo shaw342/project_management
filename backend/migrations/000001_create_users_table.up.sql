@@ -1,4 +1,4 @@
-CREATE TABLE users(
+/*CREATE TABLE users(
     user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     firstName VARCHAR(100) NOT NULL,
     lastName VARCHAR(100) NOT NULL,
@@ -6,4 +6,4 @@ CREATE TABLE users(
     password TEXT NOT NULL,
     status VARCHAR(100) NOT NULL,
     createat TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+);*/

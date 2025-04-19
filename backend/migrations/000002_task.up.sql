@@ -1,8 +1,0 @@
-CREATE TABLE task (
-    task_id VARCHAR(100) PRIMARY KEY NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    content VARCHAR(100) NOT NULL,
-    assign  VARCHAR(100) NOT NULL,
-    state VARCHAR(100) NOT NULL
-    
-);

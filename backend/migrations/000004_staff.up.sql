@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS staff(
-    staff_id VARCHAR(100) PRIMARY KEY NOT NULL,
+    staff_id UUID PRIMARY KEY NOT NULL uuid4_generate_v4(),
     user_id UUID NOT NULL,
     team_id UUID NOT NULL,
     CONSTRAINT fk_user

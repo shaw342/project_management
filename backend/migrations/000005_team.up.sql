@@ -1,5 +1,0 @@
-CREATE TABLE IF NOT EXISTS team(
-    id VARCHAR(100) NOT NULL,
-    team_id UUID PRIMARY KEY NOT NULL uuid_generate_v4(),
-    name VARCHAR(100) NOT NULL
-);

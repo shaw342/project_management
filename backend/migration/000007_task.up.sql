@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS task (
     state VARCHAR(100) NOT NULL,
     CONSTRAINT fk_manager
     FOREIGN KEY (manager_id) REFERENCES manager(manager_id),
-    CONSTRAINT staff_id 
+    CONSTRAINT fk_staff
     FOREIGN KEY (staff_id) REFERENCES  staff(staff_id),
     creatAt VARCHAR(100) NOT NULL
 );

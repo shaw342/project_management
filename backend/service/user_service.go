@@ -119,7 +119,7 @@ func (s *UserService) CreateNote(note model.Note) (model.Note, error) {
 func (s *UserService) CreateManager(manager model.Manager) (model.Manager, error) {
 	var serverResult model.Manager
 
-	queryString := "INSERT INTO manager(user_id,owner_id)"
+	queryString := "INSERT INTO manager(user_id,owner_id) VALUES($1,$2) RETURNING user_id"
 
 	QueryError := s.db.QueryRow(queryString, manager.UserId, manager.OwnerId).Scan(&serverResult)
 

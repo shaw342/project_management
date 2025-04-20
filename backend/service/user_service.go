@@ -2,7 +2,6 @@ package service
 
 import (
 	"database/sql"
-	"fmt"
 
 	_ "github.com/lib/pq"
 	"github.com/shaw342/projet_argile/backend/model"
@@ -11,12 +10,6 @@ import (
 
 type UserService struct {
 	db *sql.DB
-}
-
-type ServiceInterface struct {
-	CreateUser (model.User)
-	CheckUser  (model.User)
-	GetUser    (model.User)
 }
 
 func NewUserService(db *sql.DB) *UserService {
@@ -101,12 +94,38 @@ func (s *UserService) GetUser(email string) (model.User, error) {
 
 	err := s.db.QueryRow(queryString, email).Scan(&user.FirstName, &user.LastName, &user.CreateAt, &user.Password, user.UserId, &user.Status, user.Email)
 
-	fmt.Println(user.Password)
-
 	if err != nil {
 
 		return model.User{}, err
 	}
 
 	return user, nil
+}
+
+func (s *UserService) CreateNote(note model.Note) (model.Note, error) {
+	var result model.Note
+
+	queryString := "INSERT INTO note(id,name,content,user_id,task_id) VALUES($1,$2,$3,$4,$5)"
+
+	err := s.db.QueryRow(queryString, &note.Id, &note.Name, &note.Content, &note.UserId, &note.NoteId).Scan(&result.Id, &result.Name, &result.Content, &result.NoteId, &result.UserId, &result.Level)
+
+	if err != nil {
+		return model.Note{}, err
+	}
+
+	return result, nil
+}
+
+func (s *UserService) CreateManager(manager model.Manager) (model.Manager, error) {
+	var serverResult model.Manager
+
+	queryString := "INSERT INTO manager(user_id,owner_id)"
+
+	QueryError := s.db.QueryRow(queryString, manager.UserId, manager.OwnerId).Scan(&serverResult)
+
+	if QueryError != nil {
+		return model.Manager{}, QueryError
+	}
+
+	return serverResult, nil
 }

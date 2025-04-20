@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -58,10 +59,10 @@ func TestCreateTask(t *testing.T) {
 	router := routes.SetupRouter(db)
 
 	task := model.Task{
-		TaskId:  "1",
-		Name:    "implement authentication",
-		Content: "decription",
-		Assign:  "124",
+		ManagerId: "",
+		Name:      "implement authentication",
+		Content:   "decription",
+		Assign:    "124",
 	}
 
 	jsonData, err := json.Marshal(&task)
@@ -70,7 +71,7 @@ func TestCreateTask(t *testing.T) {
 		t.Error(err)
 	}
 
-	req, err := http.NewRequest("POST", "http://localhost:8080/api/task/create", bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/v1/task/create", bytes.NewBuffer(jsonData))
 
 	if err != nil {
 		t.Error(err)
@@ -81,7 +82,7 @@ func TestCreateTask(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	router.ServeHTTP(w, req)
-
+	fmt.Println(w.Body)
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 }
@@ -224,10 +225,11 @@ func TestCreateNote(t *testing.T) {
 	routers := routes.SetupRouter(db)
 
 	note := model.Note{
-		NoteId:  "1",
-		UserId:  "sifeifj",
-		Title:   "hello world",
+		Id:      "1",
+		UserId:  "9bb88b37-52b7-4b5f-b293-cf837b8d2c5e",
+		Name:    "hello world",
 		Content: "dknfrwongvrjw",
+		Level:   "high",
 	}
 
 	jsonDate, err := json.Marshal(&note)
@@ -236,7 +238,7 @@ func TestCreateNote(t *testing.T) {
 		t.Error(err)
 	}
 
-	req, err := http.NewRequest("POST", "http://localhost:8080/api/v1/notes/create", bytes.NewBuffer(jsonDate))
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/v1/note/create", bytes.NewBuffer(jsonDate))
 
 	if err != nil {
 		t.Error(err)
@@ -248,4 +250,33 @@ func TestCreateNote(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 
+}
+
+func TestCreateOwner(t *testing.T) {
+	db := config.ConnectDB()
+	defer db.Close()
+
+	routers := routes.SetupRouter(db)
+
+	owner := model.Owner{
+		UserId: "7f267768-4b63-47bb-ac5f-884b530b409a",
+	}
+
+	jsonData, err := json.Marshal(&owner)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/v1/user/owner/create", bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	w := httptest.NewRecorder()
+
+	routers.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
 }

@@ -158,3 +158,59 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusAccepted, user)
 }
+
+func (c *UserController) CreateNote(ctx *gin.Context) {
+	note := model.Note{}
+
+	if err := ctx.ShouldBindJSON(&note); err != nil {
+		log.Fatal(err)
+	}
+
+	note, err := c.userService.CreateNote(note)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusCreated, note)
+}
+
+func (c *UserController) CreateManager(ctx *gin.Context) {
+	manager := model.Manager{}
+
+	if err := ctx.ShouldBindJSON(&manager); err != nil {
+		log.Fatal(err)
+	}
+
+	if manager.OwnerId == "" {
+		log.Fatal("missing owner id")
+	}
+
+	if manager.UserId == "" {
+		log.Fatal("mising user id")
+	}
+
+	result, err := c.userService.CreateManager(manager)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusCreated, result)
+}
+
+func (c *UserController) CreateOwner(ctx *gin.Context) {
+	owner := model.Owner{}
+
+	if err := ctx.ShouldBindJSON(&owner); err != nil {
+		log.Fatal(err)
+	}
+
+	result, err := c.userService.CreateOwner(owner)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusCreated, result)
+}

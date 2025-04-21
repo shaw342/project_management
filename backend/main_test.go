@@ -26,11 +26,11 @@ func TestRegister(t *testing.T) {
 	createat := time.DateOnly
 
 	user := model.User{
-		FirstName: "shawan",
-		LastName:  "yousull",
+		FirstName: "fabrice",
+		LastName:  "eboue",
 		Password:  "123456",
-		Email:     "local@gmail.com",
-		Status:    "active",
+		Email:     "perniso@gmail.com",
+		Status:    "inactive",
 		CreateAt:  createat,
 	}
 
@@ -279,4 +279,33 @@ func TestCreateOwner(t *testing.T) {
 	routers.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
+}
+
+func TestCreateManager(t *testing.T) {
+	db := config.ConnectDB()
+	defer db.Close()
+
+	routers := routes.SetupRouter(db)
+
+	manager := model.Manager{
+		UserId:  "d592e6d4-fe3c-45dc-a782-5aae58ddbbe9",
+		OwnerId: "130743c8-39db-412a-92d0-09f84604e0bc",
+	}
+
+	jsonData, err := json.Marshal(&manager)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	req, err := http.NewRequest("POST", "http://localhost:8080/api/v1/user/manager/create", bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		t.Error(err)
+	}
+	w := httptest.NewRecorder()
+	routers.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+
 }

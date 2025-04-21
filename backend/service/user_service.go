@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	"github.com/shaw342/projet_argile/backend/model"
 	utils_s "github.com/shaw342/projet_argile/backend/utils"
@@ -121,10 +122,36 @@ func (s *UserService) CreateManager(manager model.Manager) (model.Manager, error
 
 	queryString := "INSERT INTO manager(user_id,owner_id) VALUES($1,$2) RETURNING user_id"
 
-	QueryError := s.db.QueryRow(queryString, manager.UserId, manager.OwnerId).Scan(&serverResult)
+	userId, er := uuid.Parse(manager.UserId)
 
-	if QueryError != nil {
-		return model.Manager{}, QueryError
+	if er != nil {
+		return model.Manager{}, er
+	}
+
+	ownerId, er := uuid.Parse(manager.OwnerId)
+
+	if er != nil {
+		return model.Manager{}, nil
+	}
+
+	err := s.db.QueryRow(queryString, userId, ownerId).Scan(&serverResult.UserId)
+
+	if err != nil {
+		return model.Manager{}, err
+	}
+
+	return serverResult, nil
+}
+
+func (s *UserService) CreateOwner(owner model.Owner) (model.Owner, error) {
+	var serverResult model.Owner
+
+	queryString := "INSERT INTO owner(user_id) VALUES($1) RETURNING user_id"
+
+	err := s.db.QueryRow(queryString, &owner.UserId).Scan(&serverResult.UserId)
+
+	if err != nil {
+		return model.Owner{}, err
 	}
 
 	return serverResult, nil

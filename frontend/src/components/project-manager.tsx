@@ -120,9 +120,11 @@ export function ProjectManager() {
                   <div className="flex items-center">
                     <Users className="h-4 w-4 mr-2" />
                     <span className="text-sm">Manager: {project.manager}</span>
-                  
-                    <Badge className={getStatusColor(project.status)}>{project.status}</Badge>
+            
                   </div>
+                  <div>
+                    <Badge className={getStatusColor(project.status)}>{project.status}</Badge>
+                    </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">

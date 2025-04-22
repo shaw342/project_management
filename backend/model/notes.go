@@ -1,8 +1,10 @@
 package model
 
 type Note struct {
-	NoteId  string `json:"noteId"`
-	UserId  string `json:"userId"`
-	Title   string `json:"title"`
+	Id      string `json:"id"`
+	NoteId  string `json:"note_id"`
+	UserId  string `json:"user_id"`
+	Name    string `json:"Name"`
 	Content string `json:"content"`
+	Level   State  `json:"level"`
 }

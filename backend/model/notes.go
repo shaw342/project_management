@@ -6,5 +6,5 @@ type Note struct {
 	UserId  string `json:"user_id"`
 	Name    string `json:"Name"`
 	Content string `json:"content"`
-	Level   State  `json:"level"`
+	Level   Level  `json:"level"`
 }

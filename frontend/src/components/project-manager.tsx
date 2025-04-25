@@ -145,8 +145,8 @@ export function ProjectManager() {
         </div>
       </TabsContent>
 
-      <TabsContent value="create">
-        <Card>
+      <TabsContent value="create" className="flex justify-center items-center h-[100vh]">
+        <Card className="w-[500px]">
           <CardHeader>
             <CardTitle>Create New Project</CardTitle>
             <CardDescription>Fill in the details to create a new project</CardDescription>

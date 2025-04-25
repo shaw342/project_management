@@ -1,4 +1,4 @@
-"use client"
+ "use client"
 
 import React, { useState, useEffect } from 'react'
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, eachMinuteOfInterval, isSameMonth, isSameDay, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, eachHourOfInterval, startOfDay, endOfDay, isSameHour, parseISO, isWithinInterval } from 'date-fns'
@@ -8,8 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Task, fetchTasks, cn } from '@/lib/utils'
-import axios from 'axios'
-import { log } from 'console'
 
 type ViewType = 'month' | 'week' | 'day'
 
@@ -17,27 +15,14 @@ const WEEK_START_HOUR = 0
 const WEEK_END_HOUR = 24
 const MINUTES_STEP = 30
 
-export function Calendar() {
+export  default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [tasks, setTasks] = useState<Task[]>([])
   const [viewType, setViewType] = useState<ViewType>('week')
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-
-        const response = await axios.post("http:localhost:8080/api/v1/task/get/all")
-        setTasks(response.data)
-
-      } catch (error) {
-
-        console.log(error);
-        
-      }
-    }
-    fetchTasks()
+    fetchTasks().then(setTasks)
   }, [])
-
 
   const onDateClick = (day: Date) => {
     setCurrentDate(day)

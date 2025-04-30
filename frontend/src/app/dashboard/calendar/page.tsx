@@ -1,4 +1,4 @@
-import Calendar from '@/components/Calendar'
+import Calendar from "@/components/Calendar"
 import { headers } from 'next/headers'
 
 export default function Home() {

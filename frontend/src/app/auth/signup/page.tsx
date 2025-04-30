@@ -1,10 +1,10 @@
 import React from "react";
-import LoginForm from "./loginForm";
-export default function Signup() {
-    
-    return (
+import SignInForm from "./SignInForm";
+
+export default function SignIn() {
+    return(
         <div className="h-[100vh] flex justify-center items-center">
-            <LoginForm/>
+            <SignInForm/>
         </div>
     )
 }

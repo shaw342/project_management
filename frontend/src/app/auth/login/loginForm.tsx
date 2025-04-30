@@ -41,7 +41,8 @@ export default function LoginForm() {
     e.preventDefault()
 
     axios.defaults.headers["Content-Type"] = "application/json"
-    axios.post("http://localhost:8080/api/v1/login",auth).then(res =>{
+
+    axios.post("http://localhost:8080/api/v1/login",auth).then(res => {
       setCookie("token",res.data)
       router.push("/dashboard")
     }).catch(error =>{
@@ -99,7 +100,7 @@ export default function LoginForm() {
         </form>
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{" "}
-          <Link href="signin" className="underline" >
+          <Link href="signup" className="underline" >
             Sign in
           </Link>
         </div>

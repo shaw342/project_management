@@ -1,6 +1,7 @@
  "use client"
 
 import React, { useState, useEffect } from 'react'
+import Link from "next/link";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, eachMinuteOfInterval, isSameMonth, isSameDay, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths, eachHourOfInterval, startOfDay, endOfDay, isSameHour, parseISO, isWithinInterval } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -197,8 +198,15 @@ export  default function Calendar() {
                             height: `${(taskEnd - taskStart) * 2}px`,
                           }}
                         >
+                        <div>
                           <div className="font-bold truncate">{task.title}</div>
                           <div className="truncate">{task.description}</div>
+                          <div>
+                            <Button variant="secondary" asChild>
+                              <Link href="/">check</Link><ChevronRight/>
+                            </Button>
+                            </div>
+                          </div>
                         </div>
                       )
                     })}
@@ -236,8 +244,9 @@ export  default function Calendar() {
                       task.status === 'in-progress' && "bg-blue-200",
                       task.status === 'done' && "bg-green-200"
                     )}>
-                      <div className="font-bold">{task.title}</div>
+                      <div className="font-bold">{task.title} hello</div>
                       <div className="text-xs">{task.description}</div>
+                      <div><Button>check <ChevronRight/></Button></div>
                     </div>
                   ))}
               </div>
@@ -258,9 +267,9 @@ export  default function Calendar() {
               <SelectValue placeholder="Sélectionner une vue" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="month">Mois</SelectItem>
-              <SelectItem value="week">Semaine</SelectItem>
-              <SelectItem value="day">Jour</SelectItem>
+              <SelectItem value="month">Month</SelectItem>
+              <SelectItem value="week">Week</SelectItem>
+              <SelectItem value="day">Day</SelectItem>
             </SelectContent>
           </Select>
           <div className="flex items-center space-x-2">
@@ -268,7 +277,7 @@ export  default function Calendar() {
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button variant="outline" onClick={() => setCurrentDate(new Date())}>
-              Aujourd'hui
+              Today
             </Button>
             <Button variant="outline" size="icon" onClick={nextDate}>
               <ChevronRight className="h-4 w-4" />

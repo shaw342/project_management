@@ -9,11 +9,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { format, parse, isValid } from 'date-fns'
 import axios from 'axios'
+import { Staff } from './types/staff'
 import { error, log } from 'console'
 import { id } from 'date-fns/locale'
 
-export function DetailedTaskSection() {
+
+const  staffs:Staff[] = [
+  {
+    id:"1",
+    name:"shawan"
+  },
+  {
+    id:"2",
+    name:"brice"
+  },
+  {
+    id:"3",
+    name:"nico"
+  },
+]
+
+export function CreateTask() {
   const [tasks, setTasks] = useState<Task[]>([])
+  const [team,setTeam] = useState<Staff[]>([])
   const [newTask, setNewTask] = useState<Task>({
     id:0,
     name: '',
@@ -54,10 +72,6 @@ export function DetailedTaskSection() {
       })
     }
   }
-
-  console.log('====================================');
-  console.log(tasks);
-  console.log('====================================');
 
   const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
     const date = parse(value, 'yyyy-MM-dd', new Date())
@@ -124,6 +138,17 @@ export function DetailedTaskSection() {
                 onChange={(e) => handleDateChange('endDate', e.target.value)}
               />
             </div>
+            <Select value={newTask.assignee} onValueChange={(value:Task["assignee"]) => setNewTask({...newTask,assignee:value})}>
+              <SelectTrigger>
+                <SelectValue placeholder="Assignee"/>
+              </SelectTrigger>
+             <SelectContent>
+              {staffs.map((staff) => 
+                <SelectItem value={staff.name}>{staff.name}</SelectItem>
+              )}
+
+              </SelectContent> 
+            </Select>
             <Select
               value={newTask.status}
               onValueChange={(value: Task['status']) => setNewTask({ ...newTask, status: value })}

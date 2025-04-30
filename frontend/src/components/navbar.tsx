@@ -59,10 +59,10 @@ export function Navbar() {
         {!isMobile && (
           <div className="hidden md:flex md:items-center md:gap-2">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/auth/signup">Login</Link>
+              <Link href="/auth/login">Login</Link>
             </Button>
             <Button size="sm" asChild>
-              <Link href="/auth/signin">Sign in</Link>
+              <Link href="/auth/signup">Sign Up</Link>
             </Button>
           </div>
         )}
@@ -91,10 +91,10 @@ export function Navbar() {
             ))}
             <div className="flex flex-col gap-2 pt-3">
               <Button variant="ghost" size="sm" className="justify-start" asChild>
-                <Link href="/auth/login/signup">Login </Link>
+                <Link href="/auth/login">Login </Link>
               </Button>
               <Button size="sm" className="justify-start" asChild>
-                <Link href="/auth/signin">Sign in</Link>
+                <Link href="/auth/signup">Sign Up</Link>
               </Button>
             </div>
           </div>

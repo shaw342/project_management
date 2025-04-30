@@ -52,7 +52,7 @@ export function CreateProjectForm({ onProjectCreated }: { onProjectCreated: (pro
     }
   }, []);
 
-  axios.get("http://localhost:8080/api/v1/user/get").then(res =>{
+  axios.get("http://localhost:8080/api/v1/user/get").then(res => {
     console.log(res.data);
   }).catch(error =>{
     console.log('====================================');

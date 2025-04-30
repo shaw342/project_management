@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, UsersIcon, CheckSquareIcon, Trash2Icon, EditIcon } from 'lucide-react'
-import { Project } from '@/components/types'
+import { Project } from '@/components/types/project'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { getCookie } from 'cookies-next/client'
@@ -24,6 +24,7 @@ export function ProjectList({ onDeleteProject, onEditProject }: ProjectListProps
 
   useEffect(() => {
     const cookieToken = getCookie("token") as string | undefined;
+    
     if (cookieToken) {
       setToken(cookieToken);
 

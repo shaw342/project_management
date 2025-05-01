@@ -2,8 +2,10 @@ package routes
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -12,7 +14,22 @@ import (
 )
 
 func SetupRouter(db *sql.DB) *gin.Engine {
-	r := gin.Default()
+	r := gin.New()
+
+	r.Use(gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
+		return fmt.Sprintf("%s - [%s] \"%s %s %s %d %s \"%s\" %s\"\n",
+			param.ClientIP,
+			param.TimeStamp.Format(time.RFC1123),
+			param.Method,
+			param.Path,
+			param.Request.Proto,
+			param.StatusCode,
+			param.Latency,
+			param.Request.UserAgent(),
+			param.ErrorMessage,
+		)
+	}))
+	r.Use(gin.Recovery())
 
 	gin.SetMode(gin.DebugMode)
 	userService := service.NewUserService(db)
@@ -54,6 +71,9 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 		v1.GET("user/get", userController.GetUser)
 		v1.POST("login", userController.Login)
 		v1.POST("task/create", managerController.CreateTask)
+		v1.POST("note/create", userController.CreateNote)
+		v1.POST("user/owner/create", userController.CreateOwner)
+		v1.POST("user/manager/create", userController.CreateManager)
 	}
 
 	return r

@@ -31,3 +31,19 @@ func (c *ManagerController) CreateTask(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, gin.H{"successFull": result})
 }
+
+func (c *ManagerController) CreateTeam(ctx *gin.Context) {
+	team := model.Team{}
+
+	if err := ctx.ShouldBindJSON(&team); err != nil {
+		log.Fatal(err)
+	}
+
+	result, err := c.service.CreateTeam(team)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusCreated, result)
+}

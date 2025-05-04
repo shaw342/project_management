@@ -28,18 +28,18 @@ func (s *ManagerService) CreateTask(task model.Task) (string, error) {
 	return result.TaskId, nil
 }
 
-func (s *ManagerService) CreateTeam(team model.Team) (string, error) {
+func (s *ManagerService) CreateTeam(team model.Team) (model.Team, error) {
 	var result model.Team
 
-	queryString := "INSERT INTO team(id,name,owner_id) VALUES($1,$2,$3) RETURNING team_id"
+	queryString := "INSERT INTO team(id,name,owner_id) VALUES($1,$2,$3)"
 
-	queryErro := s.db.QueryRow(queryString, team.Id, team.Name, team.OwnerId).Scan(&result.TeamId)
+	queryErro := s.db.QueryRow(queryString, team.Id, team.Name, team.OwnerId).Scan(&result)
 
 	if queryErro != nil {
-		return "", queryErro
+		return model.Team{}, queryErro
 	}
 
-	return result.TeamId, nil
+	return result, nil
 }
 
 func (s *ManagerService) DeleteTeam(teamId string) (string, error) {

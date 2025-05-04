@@ -9,9 +9,12 @@ import (
 	"os"
 	"time"
 
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
+	verification "github.com/shaw342/projet_argile/backend/Verification"
 	"github.com/shaw342/projet_argile/backend/model"
 	"github.com/shaw342/projet_argile/backend/service"
 	"golang.org/x/crypto/bcrypt"
@@ -72,7 +75,29 @@ func (c *UserController) Register(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	ctx.JSON(http.StatusCreated, result)
+	code := verification.GenerateRandNumber()
+
+	mailCode := model.CodeForMail{
+		Code:  fmt.Sprint(code),
+		Email: result.Email,
+	}
+
+	saveCodeId, err := c.userService.SaveMailCode(mailCode)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	if saveCodeId == "" {
+		log.Fatal("empty id")
+	}
+
+	emailErr := verification.SendEmail(result.Email, code)
+
+	if emailErr != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{"code": saveCodeId})
 }
 
 func (c *UserController) Welcome(ctx *gin.Context) {

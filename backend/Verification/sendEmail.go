@@ -1,14 +1,18 @@
 package verification
 
 import (
+	"fmt"
 	"log"
+	"math"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	gomail "gopkg.in/gomail.v2"
 )
 
-func SendEmail(email string) (string, error) {
+func SendEmail(email string, num int) (string, error) {
 
 	err := godotenv.Load()
 
@@ -23,7 +27,14 @@ func SendEmail(email string) (string, error) {
 	message.SetHeader("To", email)
 	message.SetHeader("Subject", "first test")
 
-	message.SetBody("text/plaine", "This is the Test ")
+	body := fmt.Sprintf(`<html>
+	<body>
+	<h1> This is your code %d 
+	</body>
+	
+	</html>`, num)
+
+	message.SetBody("text/plaine", body)
 
 	dialer := gomail.NewDialer("smtp.gmail.com", 587, "iussulcompany@gmail.com", password)
 
@@ -32,4 +43,12 @@ func SendEmail(email string) (string, error) {
 	}
 
 	return email, nil
+}
+
+func GenerateRandNumber() int {
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	number := rand.Intn(int(math.Pow(10, 9)))
+
+	return number
 }

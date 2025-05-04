@@ -12,7 +12,7 @@ import (
 	gomail "gopkg.in/gomail.v2"
 )
 
-func SendEmail(email string, num int) (string, error) {
+func SendEmail(email string, num int) error {
 
 	err := godotenv.Load()
 
@@ -34,15 +34,15 @@ func SendEmail(email string, num int) (string, error) {
 	
 	</html>`, num)
 
-	message.SetBody("text/plaine", body)
+	message.SetBody("text/html", body)
 
 	dialer := gomail.NewDialer("smtp.gmail.com", 587, "iussulcompany@gmail.com", password)
 
 	if err := dialer.DialAndSend(message); err != nil {
-		return "", err
+		return err
 	}
 
-	return email, nil
+	return nil
 }
 
 func GenerateRandNumber() int {

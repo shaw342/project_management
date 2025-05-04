@@ -2,6 +2,7 @@ package service
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -27,8 +28,10 @@ func (s *UserService) CreateUser(user model.User) (model.User, error) {
 		return model.User{}, err
 	}
 
+	createAt := time.Now()
+
 	QueryErr := s.db.QueryRow(`INSERT INTO users(firstName,lastName,email,password,status,createat)
-		VALUES ($1,$2,$3,$4,$5,$6) RETURNING user_id`, user.FirstName, user.LastName, user.Email, hashPassword, user.Status, user.CreateAt).Scan(&userId)
+		VALUES ($1,$2,$3,$4,$5,$6) RETURNING user_id`, user.FirstName, user.LastName, user.Email, hashPassword, user.Status, createAt).Scan(&userId)
 
 	if QueryErr != nil {
 		return model.User{}, QueryErr
@@ -155,4 +158,18 @@ func (s *UserService) CreateOwner(owner model.Owner) (model.Owner, error) {
 	}
 
 	return serverResult, nil
+}
+
+func (s *UserService) SaveMailCode(code model.CodeForMail) (string, error) {
+	var serverResult model.CodeForMail
+
+	queryString := "INSERT INTO mail_code(email,code) VALUES($1,$2)"
+
+	err := s.db.QueryRow(queryString, code.Email, code.Code).Scan(&serverResult.Id)
+
+	if err != nil {
+		return "", err
+	}
+
+	return serverResult.Id, nil
 }

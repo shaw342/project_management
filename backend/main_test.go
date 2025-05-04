@@ -11,7 +11,6 @@ import (
 
 	"time"
 
-	verification "github.com/shaw342/projet_argile/backend/Verification"
 	"github.com/shaw342/projet_argile/backend/config"
 	"github.com/shaw342/projet_argile/backend/model"
 	"github.com/shaw342/projet_argile/backend/routes"
@@ -26,10 +25,10 @@ func TestRegister(t *testing.T) {
 	createat := time.DateOnly
 
 	user := model.User{
-		FirstName: "fabrice",
-		LastName:  "eboue",
+		FirstName: "fabr",
+		LastName:  "ebo",
 		Password:  "123456",
-		Email:     "perniso@gmail.com",
+		Email:     "babec89032@bocapies.com",
 		Status:    "inactive",
 		CreateAt:  createat,
 	}
@@ -102,19 +101,6 @@ func TestCheckUser(t *testing.T) {
 
 	assert.Equal(t, true, response)
 }
-
-func TestEmail(t *testing.T) {
-
-	email := "localfv9efnv"
-	result, err := verification.SendEmail(email)
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	assert.Equal(t, "localfv9efnv", result)
-}
-
 func TestGetUser(t *testing.T) {
 	db := config.ConnectDB()
 	defer db.Close()

@@ -1,7 +1,7 @@
 package model
 
 type CodeForMail struct {
-	Id    string `json:"id" fauna:"id"`
-	Code  string `json:"code" fauna:"code"`
-	Email string `json:"email" fauna:"email"`
+	Id    string `json:"id"`
+	Code  string `json:"code"`
+	Email string `json:"email"`
 }

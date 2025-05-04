@@ -160,16 +160,16 @@ func (s *UserService) CreateOwner(owner model.Owner) (model.Owner, error) {
 	return serverResult, nil
 }
 
-func (s *UserService) SaveMailCode(code model.CodeForMail) error {
+func (s *UserService) SaveMailCode(code model.CodeForMail) (string, error) {
 	var serverResult model.CodeForMail
 
 	queryString := "INSERT INTO mail_code(email,code) VALUES($1,$2)"
 
-	err := s.db.QueryRow(queryString, code.Email, code.Code).Scan(&serverResult.Email, &serverResult.Code)
+	err := s.db.QueryRow(queryString, code.Email, code.Code).Scan(&serverResult.Id)
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return serverResult.Id, nil
 }

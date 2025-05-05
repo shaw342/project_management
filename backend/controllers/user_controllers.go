@@ -97,7 +97,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{"code": saveCodeId})
+	ctx.JSON(http.StatusCreated, gin.H{"id": saveCodeId})
 }
 
 func (c *UserController) Welcome(ctx *gin.Context) {
@@ -238,4 +238,20 @@ func (c *UserController) CreateOwner(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, result)
+}
+
+func (c *UserController) GetEmailCode(ctx *gin.Context) {
+	mail_code := model.CodeForMail{}
+
+	if err := ctx.ShouldBindJSON(&mail_code); err != nil {
+		log.Fatal(err)
+	}
+
+	response, err := c.userService.GetMailCode(mail_code.Id)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusAccepted, response)
 }

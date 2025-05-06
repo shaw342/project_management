@@ -74,6 +74,8 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 		v1.POST("note/create", userController.CreateNote)
 		v1.POST("user/owner/create", userController.CreateOwner)
 		v1.POST("user/manager/create", userController.CreateManager)
+		v1.POST("user/get/code", userController.GetEmailCode)
+		v1.DELETE("user/email/code/:id", userController.DeleteEmailCode)
 	}
 
 	return r

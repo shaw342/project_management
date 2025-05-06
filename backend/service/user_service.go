@@ -2,6 +2,7 @@ package service
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -163,7 +164,7 @@ func (s *UserService) CreateOwner(owner model.Owner) (model.Owner, error) {
 func (s *UserService) SaveMailCode(code model.CodeForMail) (string, error) {
 	var serverResult model.CodeForMail
 
-	queryString := "INSERT INTO mail_code(email,code) VALUES($1,$2)"
+	queryString := "INSERT INTO mail_code(email,code) VALUES($1,$2) RETURNING id"
 
 	err := s.db.QueryRow(queryString, code.Email, code.Code).Scan(&serverResult.Id)
 
@@ -172,4 +173,35 @@ func (s *UserService) SaveMailCode(code model.CodeForMail) (string, error) {
 	}
 
 	return serverResult.Id, nil
+}
+
+func (s *UserService) GetMailCode(id string) (model.CodeForMail, error) {
+	var serverResult model.CodeForMail
+
+	queryString := "SELECT * FROM mail_code WHERE id = $1"
+	err := s.db.QueryRow(queryString, id).Scan(&serverResult.Id, &serverResult.Email, &serverResult.Code)
+
+	if err != nil {
+		return model.CodeForMail{}, fmt.Errorf("error to execute query %v", err)
+	}
+
+	return serverResult, nil
+}
+
+func (s *UserService) DeleteMailCode(id string) (bool, error) {
+
+	queryString := "DELETE FROM mail_code WHERE id = $1"
+
+	row, err := s.db.Exec(queryString, id)
+
+	if err != nil {
+		return false, err
+	}
+	rowAffected, err := row.RowsAffected()
+
+	if err != nil {
+		return false, err
+	}
+
+	return rowAffected > 0, nil
 }

@@ -79,17 +79,17 @@ func (s *UserService) GetAllUser() ([]model.User, error) {
 }
 
 func (s *UserService) GetAuth(email string) (string, error) {
-	var auth model.Auth
+	var password string
 
 	queryString := "SELECT password FROM users WHERE email = $1"
 
-	err := s.db.QueryRow(queryString, email).Scan(&auth.Password)
+	err := s.db.QueryRow(queryString, email).Scan(&password)
 
 	if err != nil {
 		return "", err
 	}
 
-	return auth.Password, nil
+	return password, nil
 }
 
 func (s *UserService) GetUser(email string) (model.User, error) {
@@ -97,7 +97,7 @@ func (s *UserService) GetUser(email string) (model.User, error) {
 
 	queryString := "SELECT * FROM users WHERE email = $1"
 
-	err := s.db.QueryRow(queryString, email).Scan(&user.FirstName, &user.LastName, &user.CreateAt, &user.Password, user.UserId, &user.Status, user.Email)
+	err := s.db.QueryRow(queryString, email).Scan(&user.UserId, &user.FirstName, &user.LastName, &user.Email, &user.Password, &user.Status, &user.CreateAt)
 
 	if err != nil {
 
@@ -197,6 +197,7 @@ func (s *UserService) DeleteMailCode(id string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	rowAffected, err := row.RowsAffected()
 
 	if err != nil {

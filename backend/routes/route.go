@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/shaw342/projet_argile/backend/Middleware"
 	"github.com/shaw342/projet_argile/backend/controllers"
 	"github.com/shaw342/projet_argile/backend/service"
 )
@@ -64,17 +65,18 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 	v1 := r.Group("api/v1")
 	{
 		v1.POST("register", userController.Register)
-		v1.GET("welcome", userController.Welcome)
+		v1.GET("welcome", Middleware.AuthMiddleware(), userController.Welcome)
 		v1.PATCH("user/:id/update")
 		v1.DELETE("user/:id/delete")
 		v1.POST("check", userController.CheckUser)
 		v1.GET("user/get", userController.GetUser)
 		v1.POST("login", userController.Login)
-		v1.POST("task/create", managerController.CreateTask)
+		v1.POST("logout", Middleware.AuthMiddleware(), userController.Logout)
+		v1.POST("task/create", Middleware.AuthMiddleware(), managerController.CreateTask)
 		v1.POST("note/create", userController.CreateNote)
 		v1.POST("user/owner/create", userController.CreateOwner)
-		v1.POST("user/manager/create", userController.CreateManager)
 		v1.POST("user/get/code", userController.GetEmailCode)
+		v1.POST("user/team/create", Middleware.AuthMiddleware(),managerController.CreateTeam)
 		v1.DELETE("user/email/code/:id", userController.DeleteEmailCode)
 	}
 

@@ -148,8 +148,19 @@ func (c *UserController) Login(ctx *gin.Context) {
 	if err := ctx.ShouldBindJSON(&auth); err != nil {
 		log.Fatal(err)
 	}
-	password, err := c.userService.GetAuth(auth.Email)
 
+	check, err := c.userService.CheckUser(auth.Email)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if !check {
+		ctx.JSON(http.StatusAccepted, gin.H{"user": "not found"})
+		return
+	}
+
+	password, err := c.userService.GetAuth(auth.Email)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -216,30 +227,6 @@ func (c *UserController) CreateNote(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, note)
 }
 
-func (c *UserController) CreateManager(ctx *gin.Context) {
-	manager := model.Manager{}
-
-	if err := ctx.ShouldBindJSON(&manager); err != nil {
-		log.Fatal(err)
-	}
-
-	if manager.OwnerId == "" {
-		log.Fatal("missing owner id")
-	}
-
-	if manager.UserId == "" {
-		log.Fatal("mising user id")
-	}
-
-	result, err := c.userService.CreateManager(manager)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ctx.JSON(http.StatusCreated, result)
-}
-
 func (c *UserController) CreateOwner(ctx *gin.Context) {
 	owner := model.Owner{}
 
@@ -283,3 +270,19 @@ func (c *UserController) DeleteEmailCode(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusAccepted, gin.H{"response": delete})
 }
+
+func (c *UserController) Logout(ctx *gin.Context) {
+
+	ctx.SetCookie(
+		"jwt_token",
+		"",
+		-1,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
+	ctx.JSON(http.StatusOK, "Logout successful")
+}
+
+

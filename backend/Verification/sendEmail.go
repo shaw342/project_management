@@ -25,7 +25,7 @@ func SendEmail(email string, num int) error {
 
 	message.SetHeader("From", "iussulcompany@gmail.com")
 	message.SetHeader("To", email)
-	message.SetHeader("Subject", "first test")
+	message.SetHeader("Subject", "code verification")
 
 	body := fmt.Sprintf(`<html>
 	<body>

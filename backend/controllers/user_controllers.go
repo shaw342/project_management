@@ -101,7 +101,15 @@ func (c *UserController) Register(ctx *gin.Context) {
 }
 
 func (c *UserController) Welcome(ctx *gin.Context) {
-	ctx.JSON(200, "hello")
+	email := ctx.MustGet("Email").(string)
+
+	response, err := c.userService.GetUser(email)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(200, response)
 }
 
 func (c *UserController) GetAll(ctx *gin.Context) {
@@ -150,11 +158,18 @@ func (c *UserController) Login(ctx *gin.Context) {
 
 	if existErro != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"eror": "wrong password"})
+		return
+	}
+
+	user, err := c.userService.GetUser(auth.Email)
+
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	claims := &jwt.MapClaims{
 		"exp":    jwt.NewNumericDate(time.Now().Add(time.Hour * 1)).Unix(),
-		"issuer": "test",
+		"Issuer": user.Email,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
@@ -165,7 +180,8 @@ func (c *UserController) Login(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	ctx.JSON(http.StatusAccepted, gin.H{"success": tokenString})
+	ctx.SetCookie("access_token", tokenString, 360, "/dashboard", "localhost", false, true)
+	ctx.JSON(http.StatusAccepted, tokenString)
 }
 
 func (c *UserController) GetUser(ctx *gin.Context) {
@@ -254,4 +270,16 @@ func (c *UserController) GetEmailCode(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusAccepted, response)
+}
+
+func (c *UserController) DeleteEmailCode(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	delete, err := c.userService.DeleteMailCode(id)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusAccepted, gin.H{"response": delete})
 }

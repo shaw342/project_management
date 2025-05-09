@@ -1,4 +1,4 @@
-CREATE TABLE note(
+/*CREATE TABLE note(
     id VARCHAR(100) NOT NULL,
     name VARCHAR(100) NOT NULL,
     content VARCHAR(300) NOT NULL,
@@ -10,4 +10,4 @@ CREATE TABLE note(
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     CONSTRAINT fk_task
     FOREIGN KEY (task_id) REFERENCES task(task_id)
-);
+);*/

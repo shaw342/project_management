@@ -1,5 +1,5 @@
-CREATE TABLE IF NOT EXISTS mail_code(
+/*CREATE TABLE IF NOT EXISTS mail_code(
     id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     email VARCHAR(100) NOT NULL,
     code VARCHAR(100) NOT NULL
-);
+);*/

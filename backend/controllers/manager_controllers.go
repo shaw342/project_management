@@ -33,10 +33,34 @@ func (c *ManagerController) CreateTask(ctx *gin.Context) {
 }
 
 func (c *ManagerController) CreateTeam(ctx *gin.Context) {
-	team := model.Team{}
+	teamName := model.Team{}
+	userEmail := ctx.MustGet("Email").(string)
+	
 
-	if err := ctx.ShouldBindJSON(&team); err != nil {
+	if err := ctx.ShouldBindJSON(&teamName); err != nil {
 		log.Fatal(err)
+	}
+
+
+	user, err := c.service.GetUser(userEmail)
+
+	if err != nil{
+		log.Fatal(err)
+	}
+	data := model.Manager{
+		UserId: user.UserId,
+	}	
+
+	manager,err := c.service.CreateManager(data)
+
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	team := model.Team{
+		Id:        teamName.Id,
+		Name:      teamName.Name,
+		ManagerId: manager.ManagerId,
 	}
 
 	result, err := c.service.CreateTeam(team)

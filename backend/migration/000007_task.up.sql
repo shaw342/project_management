@@ -1,4 +1,4 @@
-/*CREATE TABLE IF NOT EXISTS task (
+CREATE TABLE IF NOT EXISTS task (
     task_id UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL,
     content VARCHAR(100) NOT NULL,
@@ -10,4 +10,4 @@
     CONSTRAINT fk_staff
     FOREIGN KEY (staff_id) REFERENCES  staff(staff_id),
     creatAt VARCHAR(100) NOT NULL
-);*/
+);

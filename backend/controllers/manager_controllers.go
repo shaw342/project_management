@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -35,25 +36,23 @@ func (c *ManagerController) CreateTask(ctx *gin.Context) {
 func (c *ManagerController) CreateTeam(ctx *gin.Context) {
 	teamName := model.Team{}
 	userEmail := ctx.MustGet("Email").(string)
-	
 
 	if err := ctx.ShouldBindJSON(&teamName); err != nil {
 		log.Fatal(err)
 	}
 
-
 	user, err := c.service.GetUser(userEmail)
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 	data := model.Manager{
 		UserId: user.UserId,
-	}	
+	}
 
-	manager,err := c.service.CreateManager(data)
+	manager, err := c.service.CreateManager(data)
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -64,6 +63,99 @@ func (c *ManagerController) CreateTeam(ctx *gin.Context) {
 	}
 
 	result, err := c.service.CreateTeam(team)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusCreated, result)
+}
+
+func (c *ManagerController) Search(ctx *gin.Context) {
+	query := ctx.Query("q")
+
+	if query == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Search query is required"})
+		return
+	}
+
+	result, err := c.service.Search(query)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusOK, result)
+}
+
+func (c *ManagerController) GetAllTeam(ctx *gin.Context) {
+	email := ctx.MustGet("Email").(string)
+
+	user, err := c.service.GetUser(email)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	allTeam, err := c.service.GetAllTeam(user.UserId)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusAccepted, allTeam)
+}
+
+func (c *ManagerController) GetTeam(ctx *gin.Context) {
+	teamName := ctx.Param("name")
+
+	if err := ctx.ShouldBindJSON(&teamName); err != nil {
+		log.Fatal(err)
+	}
+
+	result, err := c.service.GetTeam(teamName)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusOK, result)
+}
+
+func (c *ManagerController) CreateInvitation(ctx *gin.Context) {
+	invitation := model.Invitation{}
+	email := ctx.MustGet("Email").(string)
+
+	if err := ctx.ShouldBindJSON(&invitation); err != nil {
+		log.Fatal(err)
+	}
+
+	user, err := c.service.GetUser(email)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(invitation.TeamName)
+
+	team, err := c.service.GetTeam(invitation.TeamName)
+
+	if err != nil {
+
+		log.Fatal(err)
+	}
+
+	invite := model.Invitation{
+		TeamId:         team.TeamId,
+		TeamName:       invitation.TeamName,
+		SenderName:     user.FirstName + " " + user.LastName,
+		SenderEmail:    user.Email,
+		RecipientEmail: invitation.RecipientEmail,
+		Message:        invitation.Message,
+	}
+	fmt.Println(invite)
+
+	result, err := c.service.CreateInvitation(invite)
 
 	if err != nil {
 		log.Fatal(err)

@@ -1,30 +1,14 @@
 "use client"
 
-import NoteForm from "@/components/noteForm"
-import { TabsContent,Tabs,TabsTrigger ,TabsList} from "@/components/ui/tabs"
+import NoteManager from "@/components/note-form"
 
 
-
-export default function createNote() {
+export default function Note() {
 
     return (
-            <div className="w-[100%]">
-                <Tabs>
-                    <TabsList>
-                    <TabsTrigger value="Create Note">
-                        Create Note
-                    </TabsTrigger >
-                    <TabsTrigger value="All Notes">
-                        All Notes
-                    </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="Create Note">
-                    <NoteForm/>
-                    </TabsContent>
-                    <TabsContent value="All Notes">
-                        all Notes
-                    </TabsContent>
-                </Tabs>
-            </div>
-        )
+
+        <div className="w-full flex justify-start h-[100vh]">
+             <NoteManager/>
+        </div>
+    )
 }

@@ -79,9 +79,15 @@ func SetupRouter(db *sql.DB) *gin.Engine {
 		v1.POST("user/team/create", Middleware.AuthMiddleware(), managerController.CreateTeam)
 		v1.DELETE("user/email/code/:id", userController.DeleteEmailCode)
 		v1.POST("team/invitations", Middleware.AuthMiddleware(), managerController.CreateInvitation)
-
-		v1.POST("team/:name",Middleware.AuthMiddleware())
+		v1.POST("team/:name", Middleware.AuthMiddleware())
+		v1.GET("projects/all",Middleware.AuthMiddleware(),)
+		v1.POST("projects/create", Middleware.AuthMiddleware(), managerController.CreateProject)
+		v1.GET("invitation/get/all", Middleware.AuthMiddleware(), userController.GetAllInvitation)
 		v1.GET("user/team/all", Middleware.AuthMiddleware(), managerController.GetAllTeam)
+		v1.GET("get/team/status/all", Middleware.AuthMiddleware(), managerController.GetInvitationsStatus)
+		v1.PATCH("invitations/:id/read", Middleware.AuthMiddleware(), userController.IsReadInvitation)
+		v1.POST("invitations/:id/decline", Middleware.AuthMiddleware(), userController.DeclineInvitation)
+		v1.POST("invitations/:id/accepted", Middleware.AuthMiddleware(), userController.AcceptInvitation)
 		v1.GET("/search", Middleware.AuthMiddleware(), managerController.Search)
 	}
 

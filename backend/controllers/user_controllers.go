@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	verification "github.com/shaw342/projet_argile/backend/Verification"
 	"github.com/shaw342/projet_argile/backend/model"
@@ -87,6 +88,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if saveCodeId == "" {
 		log.Fatal("empty id")
 	}
@@ -285,4 +287,72 @@ func (c *UserController) Logout(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, "Logout successful")
 }
 
+func (c *UserController) GetAllInvitation(ctx *gin.Context) {
+	email := ctx.MustGet("Email").(string)
 
+	result, err := c.userService.GetInvitation(email)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("hello")
+	ctx.JSON(http.StatusOK, result)
+}
+
+func (c *UserController) IsReadInvitation(ctx *gin.Context) {
+	id := uuid.MustParse(ctx.Param("id"))
+
+	result, err := c.userService.IsRead(id)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusAccepted, result)
+}
+
+func (c *UserController) DeclineInvitation(ctx *gin.Context) {
+	id := uuid.MustParse(ctx.Param("id"))
+
+	err := c.userService.DeclinedInvitation(id)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusAccepted, true)
+}
+
+func (c *UserController) AcceptInvitation(ctx *gin.Context) {
+	id := uuid.MustParse(ctx.Param("id"))
+	team := model.Team{}
+	email := ctx.MustGet("Email").(string)
+
+	if err := ctx.ShouldBindJSON(&team); err != nil {
+		log.Fatal(err)
+	}
+
+	err := c.userService.AcceptInvitation(id)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	user, err := c.userService.GetUser(email)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	staffModel := model.Staff{
+		User_id: user.UserId,
+		Team_id: team.TeamId,
+	}
+
+	staff, err := c.userService.CreateStaff(staffModel)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	ctx.JSON(http.StatusAccepted, staff)
+}

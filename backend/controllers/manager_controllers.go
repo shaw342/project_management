@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/shaw342/projet_argile/backend/model"
 	"github.com/shaw342/projet_argile/backend/service"
 )
@@ -130,13 +131,14 @@ func (c *ManagerController) CreateInvitation(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
+	if invitation.RecipientEmail == "" {
+		log.Fatal("empty")
+	}
 	user, err := c.service.GetUser(email)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println(invitation.TeamName)
 
 	team, err := c.service.GetTeam(invitation.TeamName)
 
@@ -162,4 +164,57 @@ func (c *ManagerController) CreateInvitation(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, result)
+}
+
+func (c *ManagerController) GetInvitationsStatus(ctx *gin.Context) {
+	email := ctx.MustGet("Email").(string)
+
+	result, err := c.service.GetAllInvitationStatus(email)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx.JSON(http.StatusOK, result)
+}
+
+func (c *ManagerController) CreateProject(ctx *gin.Context) {
+	project := model.Project{}
+
+	if err := ctx.ShouldBindJSON(&project); err != nil {
+		log.Fatal(err)
+	}
+
+	team, err := c.service.GetTeamByTeamId(uuid.MustParse(project.TeamId))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	project.ManagerId = team.ManagerId
+
+	user, err := c.service.GetUserNameByManagerId(project.ManagerId)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	result, err := c.service.CreateProject(project)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	response := map[string]any{
+		"project_id":  result.ProjectId,
+		"name":        result.Name,
+		"description": result.Description,
+		"status":      result.Status,
+		"endDate":     result.EndDate,
+		"startDate":   result.StartDate,
+		"manager":     user.FirstName + " " + user.LastName,
+		"teams":       team.Name,
+	}
+
+	ctx.JSON(http.StatusCreated, response)
 }

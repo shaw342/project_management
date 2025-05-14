@@ -17,8 +17,6 @@ func main() {
 
 	router := routes.SetupRouter(db)
 
-	router.Run(":8080")
-
 	go func() {
 		if err := router.Run(":8080"); err != nil && err != http.ErrServerClosed {
 			log.Fatal("Could not run serveur")

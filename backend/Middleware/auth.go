@@ -63,13 +63,13 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		UserId, err := VerifyToken(token[1])
+		Email, err := VerifyToken(token[1])
 		if err != nil {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			ctx.Abort()
 			return
 		}
-		ctx.Set("UserId", UserId)
+		ctx.Set("Email", Email)
 		ctx.Next()
 	}
 }
@@ -96,10 +96,10 @@ func VerifyToken(tokenString string) (string, error) {
 		return "", fmt.Errorf("error extract the claims")
 	}
 
-	UserId, ok := claims["Issuer"].(string)
+	Email, ok := claims["Issuer"].(string)
 	if !ok {
 		return "", fmt.Errorf("not found UserId")
 	}
 
-	return UserId, nil
+	return Email, nil
 }

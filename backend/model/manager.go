@@ -1,7 +1,8 @@
 package model
 
+import "github.com/google/uuid"
+
 type Manager struct {
-	ManagerId string `json:"manager_id"`
-	UserId    string `json:"user_id"`
-	OwnerId   string `json:"owner_id"`
+	ManagerId uuid.UUID `json:"manager_id"`
+	UserId    uuid.UUID `json:"user_id"`
 }

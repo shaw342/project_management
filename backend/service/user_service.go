@@ -92,6 +92,20 @@ func (s *UserService) GetAuth(email string) (string, error) {
 	return password, nil
 }
 
+func (s *UserService) GetTeam(name string) (model.Team, error) {
+	var result model.Team
+
+	queryString := "SELECT * FROM team WHERE name = $1"
+
+	err := s.db.QueryRow(queryString, name).Scan(&result.Id, &result.TeamId, &result.Name, &result.ManagerId)
+
+	if err != nil {
+		return model.Team{}, err
+	}
+
+	return result, nil
+}
+
 func (s *UserService) GetUser(email string) (model.User, error) {
 	var user model.User
 
@@ -105,6 +119,20 @@ func (s *UserService) GetUser(email string) (model.User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *UserService) Welcome(userId uuid.UUID) (model.User, error) {
+	var user model.User
+
+	queryString := "SELECT * FROM users WHERE email = $1"
+
+	err := s.db.QueryRow(queryString, userId).Scan(&user.UserId, &user.FirstName, &user.LastName, &user.Email)
+
+	if err != nil {
+		return model.User{}, err
+	}
+
+	return user, err
 }
 
 func (s *UserService) CreateNote(note model.Note) (model.Note, error) {
@@ -121,38 +149,12 @@ func (s *UserService) CreateNote(note model.Note) (model.Note, error) {
 	return result, nil
 }
 
-func (s *UserService) CreateManager(manager model.Manager) (model.Manager, error) {
-	var serverResult model.Manager
-
-	queryString := "INSERT INTO manager(user_id,owner_id) VALUES($1,$2) RETURNING user_id"
-
-	userId, er := uuid.Parse(manager.UserId)
-
-	if er != nil {
-		return model.Manager{}, er
-	}
-
-	ownerId, er := uuid.Parse(manager.OwnerId)
-
-	if er != nil {
-		return model.Manager{}, nil
-	}
-
-	err := s.db.QueryRow(queryString, userId, ownerId).Scan(&serverResult.UserId)
-
-	if err != nil {
-		return model.Manager{}, err
-	}
-
-	return serverResult, nil
-}
-
 func (s *UserService) CreateOwner(owner model.Owner) (model.Owner, error) {
 	var serverResult model.Owner
 
-	queryString := "INSERT INTO owner(user_id) VALUES($1) RETURNING user_id"
+	queryString := "INSERT INTO owner(user_id,manager_id) VALUES($1,$2) RETURNING user_id"
 
-	err := s.db.QueryRow(queryString, &owner.UserId).Scan(&serverResult.UserId)
+	err := s.db.QueryRow(queryString, &owner.UserId, &owner.ManagerId).Scan(&serverResult.OwnerId, &serverResult.UserId, &serverResult.ManagerId)
 
 	if err != nil {
 		return model.Owner{}, err
@@ -205,4 +207,110 @@ func (s *UserService) DeleteMailCode(id string) (bool, error) {
 	}
 
 	return rowAffected > 0, nil
+}
+
+func (s *UserService) GetInvitation(email string) ([]model.Invitation, error) {
+	var result []model.Invitation
+
+	queryString := "SELECT id,team_id,team_name,message,is_read,recipient_email,sender_name,sender_email,is_archived FROM invitations WHERE recipient_email = $1"
+
+	row, err := s.db.Query(queryString, &email)
+
+	if err != nil {
+		return []model.Invitation{}, err
+	}
+
+	for row.Next() {
+		var invite model.Invitation
+
+		if err := row.Scan(&invite.Id, &invite.TeamId, &invite.TeamName, &invite.Message, &invite.IsRead, &invite.RecipientEmail, &invite.SenderName, &invite.SenderEmail, &invite.IsArchive); err != nil {
+			return []model.Invitation{}, err
+		}
+
+		result = append(result, invite)
+	}
+
+	return result, nil
+}
+
+func (s *UserService) IsRead(id uuid.UUID) (bool, error) {
+
+	queryString := "UPDATE invitations SET is_read = true WHERE id = $1"
+
+	row, err := s.db.Exec(queryString, &id)
+
+	if err != nil {
+		return false, err
+	}
+
+	rowAffect, err := row.RowsAffected()
+
+	if err != nil {
+		return false, err
+	}
+
+	if rowAffect == 0 {
+
+		return false, fmt.Errorf("error to update")
+	}
+
+	return true, nil
+}
+
+func (s *UserService) DeclinedInvitation(id uuid.UUID) error {
+
+	queryString := "UPDATE invitations SET status = $1, is_archived = $2 WHERE id = $3"
+	result, err := s.db.Exec(queryString, "declined", true, &id)
+	if err != nil {
+		return fmt.Errorf("failed to decline invitation: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no invitation found with id %s", id)
+	}
+
+	return nil
+}
+
+func (s *UserService) AcceptInvitation(id uuid.UUID) error {
+
+	queryString := "UPDATE invitations SET status = $1, is_archived = $2 WHERE id = $3"
+	result, err := s.db.Exec(queryString, "accepted", true, &id)
+
+	if err != nil {
+		return fmt.Errorf("failed to decline invitation: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no invitation found with id %s", id)
+	}
+
+	return nil
+
+}
+
+func (s *UserService) CreateStaff(staff model.Staff) (model.Staff, error) {
+
+	var result model.Staff
+
+	queryString := "INSERT INTO staff(user_id,team_id) VALUES($1,$2) RETURNING staff_id"
+
+	err := s.db.QueryRow(queryString, &staff.User_id, &staff.Team_id).Scan(&result.Staff_id)
+
+	if err != nil {
+
+		return model.Staff{}, err
+	}
+
+	return result, nil
 }

@@ -105,12 +105,18 @@ func (c *UserController) Register(ctx *gin.Context) {
 }
 
 func (c *UserController) Welcome(ctx *gin.Context) {
-	email := ctx.MustGet("Email").(string)
+	email, err := ctx.Get("Email")
 
-	response, err := c.userService.GetUser(email)
+	if !err {
+		log.Fatal("connot find email")
+	}
 
-	if err != nil {
-		log.Fatal(err)
+	response, getUserErr := c.userService.GetUser(email.(string))
+
+	fmt.Println(response)
+
+	if getUserErr != nil {
+		log.Fatal(getUserErr)
 	}
 
 	ctx.JSON(200, response)
@@ -195,7 +201,7 @@ func (c *UserController) Login(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	ctx.SetCookie("access_token", tokenString, 360, "/dashboard", "localhost", false, true)
+	ctx.SetCookie("access_token", tokenString, 3600, "/", "localhost", false, true)
 	ctx.JSON(http.StatusAccepted, tokenString)
 }
 

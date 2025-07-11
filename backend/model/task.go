@@ -7,6 +7,7 @@ type Task struct {
 	Name     string    `json:"name"`
 	Content  string    `json:"content"`
 	Assign   string    `json:"assign"`
-	State    string    `json:"state"`
+	State    State     `json:"state"`
+	Level    Level     `json:"level"`
 	CreateAt time.Time `json:"creatat"`
 }

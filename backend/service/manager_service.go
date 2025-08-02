@@ -65,18 +65,17 @@ func (s *ManagerService) CreateTeam(team model.Team) (model.Team, error) {
 	return result, nil
 }
 
-func (s *ManagerService) DeleteTeam(teamId string) (string, error) {
-	var result string
+func (s *ManagerService) DeleteTeam(teamId string) (sql.Result, error) {
 
-	queryString := "DELETE FROM team WHERE team.teamId = $1"
+	queryString := "DELETE FROM team WHERE team_id = $1"
 
-	queryErro := s.db.QueryRow(queryString, teamId).Scan(&result)
+	query, err := s.db.Exec(queryString, &teamId)
 
-	if queryErro != nil {
-		return "", queryErro
+	if err != nil {
+		return nil, err
 	}
 
-	return result, nil
+	return query, nil
 }
 
 func (s *ManagerService) CreateManager(manager model.Manager) (model.Manager, error) {
@@ -174,12 +173,12 @@ func (s *ManagerService) CreateInvitation(invite model.Invitation) (model.Invita
 	return result, err
 }
 
-func (s *ManagerService) GetTeam(name string) (model.Team, error) {
+func (s *ManagerService) GetTeam(team_id uuid.UUID) (model.Team, error) {
 	var result model.Team
 
-	queryString := "SELECT * FROM team WHERE name = $1"
+	queryString := "SELECT * FROM team WHERE team_id = $1"
 
-	err := s.db.QueryRow(queryString, name).Scan(&result.Id, &result.TeamId, &result.Name, &result.ManagerId)
+	err := s.db.QueryRow(queryString, team_id).Scan(&result.Id, &result.TeamId, &result.Name, &result.ManagerId)
 
 	if err != nil {
 		return model.Team{}, err

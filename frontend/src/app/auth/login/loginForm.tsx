@@ -13,8 +13,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import React, { useState } from "react"
 import axios from "axios"
-import { log } from "console"
-import { getCookie, getCookies, setCookie, deleteCookie, hasCookie } from 'cookies-next/client';
 
 
 
@@ -23,6 +21,7 @@ export const description =
 
 export default function LoginForm() {
   const router = useRouter()
+  const [userFound,setUserFound] = useState(true)
   const [auth, setAuth] = useState({
     email: "",
     password: "",
@@ -41,12 +40,22 @@ export default function LoginForm() {
     e.preventDefault()
 
     axios.defaults.headers["Content-Type"] = "application/json"
+    axios.defaults.withCredentials = true
 
     axios.post("http://localhost:8080/api/v1/login",auth).then(res => {
-      setCookie("token",res.data)
-      router.push("/dashboard")
-    }).catch(error =>{
-      console.log('====================================');
+
+      if(res.data["user"]){
+
+        setUserFound(false)
+
+      }
+      else{
+
+        router.push("/dashboard")
+
+      }
+ 
+    }).catch(error => {
       console.log(error);
       console.log('====================================');
     })
@@ -58,6 +67,9 @@ export default function LoginForm() {
         <CardTitle className="text-2xl">Login</CardTitle>
         <CardDescription>
           Enter your email below to login to your account
+          {!userFound &&
+              <h1 className="font-bold">You are not registered. Please register before logging in.</h1>
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -101,7 +113,7 @@ export default function LoginForm() {
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{" "}
           <Link href="signup" className="underline" >
-            Sign in
+            Sign Up
           </Link>
         </div>
       </CardContent>

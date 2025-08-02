@@ -13,6 +13,7 @@ import (
 
 func main() {
 	db := config.ConnectDB()
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	defer db.Close()
 
 	router := routes.SetupRouter(db)

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -35,6 +34,7 @@ func (c *ManagerController) CreateTask(ctx *gin.Context) {
 }
 
 func (c *ManagerController) CreateTeam(ctx *gin.Context) {
+
 	teamName := model.Team{}
 	userEmail := ctx.MustGet("Email").(string)
 
@@ -47,6 +47,7 @@ func (c *ManagerController) CreateTeam(ctx *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	data := model.Manager{
 		UserId: user.UserId,
 	}
@@ -108,13 +109,13 @@ func (c *ManagerController) GetAllTeam(ctx *gin.Context) {
 }
 
 func (c *ManagerController) GetTeam(ctx *gin.Context) {
-	teamName := ctx.Param("name")
+	team_id := ctx.Param("id")
 
-	if err := ctx.ShouldBindJSON(&teamName); err != nil {
+	if err := ctx.ShouldBindJSON(&team_id); err != nil {
 		log.Fatal(err)
 	}
 
-	result, err := c.service.GetTeam(teamName)
+	result, err := c.service.GetTeam(uuid.MustParse(team_id))
 
 	if err != nil {
 		log.Fatal(err)
@@ -140,7 +141,7 @@ func (c *ManagerController) CreateInvitation(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	team, err := c.service.GetTeam(invitation.TeamName)
+	team, err := c.service.GetTeam(invitation.TeamId)
 
 	if err != nil {
 
@@ -155,7 +156,6 @@ func (c *ManagerController) CreateInvitation(ctx *gin.Context) {
 		RecipientEmail: invitation.RecipientEmail,
 		Message:        invitation.Message,
 	}
-	fmt.Println(invite)
 
 	result, err := c.service.CreateInvitation(invite)
 
@@ -218,3 +218,18 @@ func (c *ManagerController) CreateProject(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, response)
 }
+
+func (c *ManagerController) DeleteTeam(ctx *gin.Context) {
+	id := ctx.Param("id")
+
+	Delete, err := c.service.DeleteTeam(id)
+
+	if err != nil{
+
+		log.Fatal(err)
+	}
+
+
+	ctx.JSON(http.StatusOK, Delete)
+}
+

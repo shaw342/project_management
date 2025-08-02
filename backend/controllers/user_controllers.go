@@ -89,19 +89,14 @@ func (c *UserController) Register(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	if saveCodeId == "" {
-		log.Fatal("empty id")
-	}
-
 	emailErr := verification.SendEmail(result.Email, code)
 
 	if emailErr != nil {
 		log.Fatal(err)
 	}
 
-	ctx.SetCookie("mail_code_id", saveCodeId, 100, "/", "localhost", false, true)
 
-	ctx.JSON(http.StatusCreated, gin.H{"success": "register please confirme"})
+	ctx.JSON(http.StatusCreated, gin.H{"success": saveCodeId})
 }
 
 func (c *UserController) Welcome(ctx *gin.Context) {
@@ -113,7 +108,6 @@ func (c *UserController) Welcome(ctx *gin.Context) {
 
 	response, getUserErr := c.userService.GetUser(email.(string))
 
-	fmt.Println(response)
 
 	if getUserErr != nil {
 		log.Fatal(getUserErr)
@@ -161,6 +155,8 @@ func (c *UserController) Login(ctx *gin.Context) {
 
 	check, err := c.userService.CheckUser(auth.Email)
 
+	fmt.Println(check)
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -178,7 +174,7 @@ func (c *UserController) Login(ctx *gin.Context) {
 	existErro := bcrypt.CompareHashAndPassword([]byte(password), []byte(auth.Password))
 
 	if existErro != nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"eror": "wrong password"})
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "wrong password"})
 		return
 	}
 
@@ -200,6 +196,7 @@ func (c *UserController) Login(ctx *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 
 	ctx.SetCookie("access_token", tokenString, 3600, "/", "localhost", false, true)
 	ctx.JSON(http.StatusAccepted, tokenString)
@@ -254,27 +251,16 @@ func (c *UserController) CreateOwner(ctx *gin.Context) {
 }
 
 func (c *UserController) GetEmailCode(ctx *gin.Context) {
-	mail_code, err := ctx.Cookie("mail_code_id")
+
+	mail_code_id := ctx.Param("id")
+
+	fmt.Println(mail_code_id)
+
+	response, err := c.userService.GetMailCode(mail_code_id)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	response, err := c.userService.GetMailCode(mail_code)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ctx.SetCookie(
-		"mail_code_id",
-		"",
-		-1,
-		"/",
-		"localhost",
-		false,
-		true,
-	)
 
 	ctx.JSON(http.StatusAccepted, response)
 }
@@ -313,7 +299,7 @@ func (c *UserController) GetAllInvitation(ctx *gin.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("hello")
+
 	ctx.JSON(http.StatusOK, result)
 }
 
@@ -374,4 +360,26 @@ func (c *UserController) AcceptInvitation(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusAccepted, staff)
+}
+
+func (c *UserController) ResendEmail(ctx *gin.Context) {
+	id, err := ctx.Cookie("mail_code_id")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	newCode := verification.GenerateRandNumber()
+
+	result, err := c.userService.UpdateEmail(id, newCode)
+
+	if err != nil && !result {
+		log.Fatal(err)
+	}
+
+	if !result {
+		log.Fatal("erro to update")
+	}
+
+	ctx.JSON(http.StatusAccepted, result)
 }

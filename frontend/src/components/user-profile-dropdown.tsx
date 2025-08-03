@@ -1,9 +1,9 @@
 "use client"
 
-import * as React from "react"
 import { useState,useEffect } from "react"
 import { getCookie } from "cookies-next/client"
 import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
 import useSWR from "swr"
 
 import {
@@ -19,52 +19,72 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, ChevronDown } from 'lucide-react'
 import axios from "axios"
 
-// Mock user data
-const user = {
+
+
+interface User {
+  firstName: string
+  lastName: string
+  email: string
+  avatarUrl: string
+}
+
+const initialUser: User = {
   firstName: "",
-  lastName:"",
+  lastName: "",
   email: "",
   avatarUrl: "",
 }
 
 export default function UserProfileDropdown() {
-  const [token, setToken] = useState<string | undefined>();
+  const router = useRouter()
 
-  useEffect(() => {
-    const cookieToken = getCookie("token") as string | undefined;
-    if (cookieToken) {
-      setToken(cookieToken);
-
-      axios.defaults.headers.common["Authorization"] = `Bearer ${cookieToken}`;
-    }
-  }, []);
+  const [user, setUser] = useState<User>(initialUser)
 
   const fetcher = (url: string) =>
-    axios.get(url).then((res) => res.data);
+    axios.get(url).then((res) => res.data)
 
-  const { data, error, isLoading } = useSWR(
-    token ? "http://localhost:8080/api/v1/welcome" : null, 
+  axios.defaults.withCredentials = true
+
+  const { data, error, isLoading } = useSWR<User>(
+    "http://localhost:8080/api/v1/welcome",
     fetcher
-  );
+  )
+
+  useEffect(() => {
+    if (data) {
+      setUser(data)
+    }
+  }, [data])
+
+  useEffect(() => {
+    if (error?.response?.status === 401) {
+      router.push("/");
+    }
+  }, [error, router]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>
   }
 
   if (error) {
-    return <div>Error : {error.message}</div>;
+    return <div>Error: {error.message}</div>
   }
 
   if (!data) {
-    return <div>No data available.</div>;
+    return <div>No data available.</div>
   }
 
-  user.email = data.Email
-  user.firstName = data.FirstName
-  
-  const handleLogout = () => {
-    // Placeholder for logout functionality
-    console.log("Logging out...")
+  const handleLogout = async () => {
+    try {
+
+      const response = await axios.post("http://localhost:8080/api/v1/logout")
+
+
+      router.push("/")
+      console.log("Logged out successfully")
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
   }
 
   return (
@@ -81,7 +101,7 @@ export default function UserProfileDropdown() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.firstName}</p>
+            <p className="text-sm font-medium leading-none">{user.firstName} {user.lastName}</p>
             <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
           </div>
         </DropdownMenuLabel>

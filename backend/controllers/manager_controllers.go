@@ -108,12 +108,19 @@ func (c *ManagerController) GetAllTeam(ctx *gin.Context) {
 	ctx.JSON(http.StatusAccepted, allTeam)
 }
 
-func (c *ManagerController) GetTeam(ctx *gin.Context) {
+func (c *ManagerController) GetAllStaff(ctx *gin.Context){
 	team_id := ctx.Param("id")
+	result,err := c.service.GetAllStaff(uuid.MustParse(team_id))
 
-	if err := ctx.ShouldBindJSON(&team_id); err != nil {
+	if err != nil{
 		log.Fatal(err)
 	}
+
+	ctx.JSON(200,result)
+}
+
+func (c *ManagerController) GetTeam(ctx *gin.Context) {
+	team_id := ctx.Param("id")
 
 	result, err := c.service.GetTeam(uuid.MustParse(team_id))
 
@@ -141,23 +148,17 @@ func (c *ManagerController) CreateInvitation(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	team, err := c.service.GetTeam(invitation.TeamId)
-
-	if err != nil {
-
-		log.Fatal(err)
-	}
-
-	invite := model.Invitation{
-		TeamId:         team.TeamId,
+	dataInvite := model.Invitation{
+		TeamId:         invitation.TeamId,
 		TeamName:       invitation.TeamName,
 		SenderName:     user.FirstName + " " + user.LastName,
 		SenderEmail:    user.Email,
 		RecipientEmail: invitation.RecipientEmail,
+		Role:invitation.Role,
 		Message:        invitation.Message,
 	}
 
-	result, err := c.service.CreateInvitation(invite)
+	result, err := c.service.CreateInvitation(dataInvite)
 
 	if err != nil {
 		log.Fatal(err)
@@ -232,4 +233,3 @@ func (c *ManagerController) DeleteTeam(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, Delete)
 }
-

@@ -155,8 +155,6 @@ func (c *UserController) Login(ctx *gin.Context) {
 
 	check, err := c.userService.CheckUser(auth.Email)
 
-	fmt.Println(check)
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -234,6 +232,8 @@ func (c *UserController) CreateNote(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, note)
 }
 
+
+
 func (c *UserController) CreateOwner(ctx *gin.Context) {
 	owner := model.Owner{}
 
@@ -280,7 +280,7 @@ func (c *UserController) DeleteEmailCode(ctx *gin.Context) {
 func (c *UserController) Logout(ctx *gin.Context) {
 
 	ctx.SetCookie(
-		"jwt_token",
+		"access_token",
 		"",
 		-1,
 		"/",
@@ -329,10 +329,10 @@ func (c *UserController) DeclineInvitation(ctx *gin.Context) {
 
 func (c *UserController) AcceptInvitation(ctx *gin.Context) {
 	id := uuid.MustParse(ctx.Param("id"))
-	team := model.Team{}
+	invitation := model.Invitation{}
 	email := ctx.MustGet("Email").(string)
 
-	if err := ctx.ShouldBindJSON(&team); err != nil {
+	if err := ctx.ShouldBindJSON(&invitation); err != nil {
 		log.Fatal(err)
 	}
 
@@ -350,7 +350,11 @@ func (c *UserController) AcceptInvitation(ctx *gin.Context) {
 
 	staffModel := model.Staff{
 		User_id: user.UserId,
-		Team_id: team.TeamId,
+		FirstName: user.FirstName,
+		LastName: user.LastName,
+		Email: user.Email,
+		Team_id: invitation.TeamId,
+		Role: invitation.Role,
 	}
 
 	staff, err := c.userService.CreateStaff(staffModel)

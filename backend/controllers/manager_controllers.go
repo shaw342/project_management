@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -92,6 +93,7 @@ func (c *ManagerController) Search(ctx *gin.Context) {
 
 func (c *ManagerController) GetAllTeam(ctx *gin.Context) {
 	email := ctx.MustGet("Email").(string)
+	var result []map[string]any
 
 	user, err := c.service.GetUser(email)
 
@@ -105,7 +107,27 @@ func (c *ManagerController) GetAllTeam(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 
-	ctx.JSON(http.StatusAccepted, allTeam)
+	for i := 0; i < len(allTeam); i++ {
+		
+		members,err := c.service.GetAllStaff(allTeam[i].TeamId)
+
+		if err != nil{
+			log.Fatal(err)
+		}
+
+		team := map[string]any{
+			"id":allTeam[i].Id,
+			"team_id":allTeam[i].TeamId,
+			"name":allTeam[i].Name,
+			"members":members,
+		}
+
+		result = append(result, team)
+	}
+
+	fmt.Println(result)
+
+	ctx.JSON(http.StatusAccepted, result)
 }
 
 func (c *ManagerController) GetAllStaff(ctx *gin.Context){

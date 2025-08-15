@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/google/uuid"
@@ -159,12 +160,43 @@ func (s *ManagerService) GetAllTeam(userId uuid.UUID) ([]model.Team, error) {
 	return result, nil
 }
 
+
+func (s *ManagerService) GetAllStaff(teamId uuid.UUID) ([]model.Staff,error){
+	var result []model.Staff
+
+	queryString := `SELECT staff.staff_id, staff.firstname, staff.lastname, staff.email, staff.role
+		FROM staff
+		INNER JOIN users ON staff.user_id = users.user_id
+		INNER JOIN team ON staff.team_id = team.team_id
+		WHERE team.team_id = $1`
+	
+	rows,err := s.db.Query(queryString,&teamId)
+
+	if err != nil{
+		return nil,fmt.Errorf("rows error %v",err)
+	}
+
+	for rows.Next(){
+		var member model.Staff
+
+		if err := rows.Scan(&member.Staff_id,&member.FirstName,&member.LastName,&member.Email,&member.Role);err != nil{
+			return nil,fmt.Errorf("error to get field %v",err)
+		}
+	
+
+		result = append(result, member)
+	}
+
+
+	return result,nil
+}
+
 func (s *ManagerService) CreateInvitation(invite model.Invitation) (model.Invitation, error) {
 	var result model.Invitation
 
-	queryString := "INSERT INTO invitations(team_id,team_name,sender_name,sender_email,sender_avatar,message,recipient_email) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id"
+	queryString := "INSERT INTO invitations(team_id,team_name,sender_name,sender_email,sender_avatar,message,recipient_email,role) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id"
 
-	err := s.db.QueryRow(queryString, &invite.TeamId, &invite.TeamName, &invite.SenderName, &invite.SenderEmail, &invite.SenderAvatar, &invite.Message, &invite.RecipientEmail).Scan(&invite.Id)
+	err := s.db.QueryRow(queryString, &invite.TeamId, &invite.TeamName, &invite.SenderName, &invite.SenderEmail, &invite.SenderAvatar, &invite.Message, &invite.RecipientEmail,&invite.Role).Scan(&invite.Id)
 
 	if err != nil {
 		return model.Invitation{}, err
@@ -212,29 +244,6 @@ func (s *ManagerService) GetAllInvitationStatus(email string) ([]model.Invitatio
 	return result, nil
 }
 
-func (s *ManagerService) GetAllStaff(team_id uuid.UUID) ([]model.User, error) {
-	var result []model.User
-
-	querystring := "SELECT u.firstname, u.lastname, u.email FROM staff s JOIN user u ON s.user_id = u.user_id WHERE s.team_id = $1"
-
-	row, err := s.db.Query(querystring, &team_id)
-
-	if err != nil {
-		return []model.User{}, err
-	}
-
-	for row.Next() {
-		var user model.User
-
-		if err := row.Scan(&user.FirstName, &user.LastName, &user.Email); err != nil {
-			return []model.User{}, err
-		}
-
-		result = append(result, user)
-	}
-
-	return result, nil
-}
 
 func (s *ManagerService) CreateProject(project model.Project) (model.Project, error) {
 	var result model.Project

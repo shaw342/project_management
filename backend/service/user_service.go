@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -106,6 +107,8 @@ func (s *UserService) GetTeam(name string) (model.Team, error) {
 	return result, nil
 }
 
+
+
 func (s *UserService) GetUser(email string) (model.User, error) {
 	var user model.User
 
@@ -121,12 +124,12 @@ func (s *UserService) GetUser(email string) (model.User, error) {
 	return user, nil
 }
 
-func (s *UserService) Welcome(userId uuid.UUID) (model.User, error) {
+func (s *UserService) Welcome(email string) (model.User, error) {
 	var user model.User
 
 	queryString := "SELECT * FROM users WHERE email = $1"
 
-	err := s.db.QueryRow(queryString, userId).Scan(&user.UserId, &user.FirstName, &user.LastName, &user.Email)
+	err := s.db.QueryRow(queryString, email).Scan(&user.UserId, &user.FirstName, &user.LastName, &user.Email)
 
 	if err != nil {
 		return model.User{}, err
@@ -173,7 +176,8 @@ func (s *UserService) SaveMailCode(code model.CodeForMail) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
+	
+	
 	return serverResult.Id, nil
 }
 
@@ -212,7 +216,7 @@ func (s *UserService) DeleteMailCode(id string) (bool, error) {
 func (s *UserService) GetInvitation(email string) ([]model.Invitation, error) {
 	var result []model.Invitation
 
-	queryString := "SELECT id,team_id,team_name,message,is_read,recipient_email,sender_name,sender_email,is_archived FROM invitations WHERE recipient_email = $1"
+	queryString := "SELECT id,team_id,team_name,message,is_read,recipient_email,sender_name,sender_email,is_archived,role,timestamp,status,sender_avatar FROM invitations WHERE recipient_email = $1"
 
 	row, err := s.db.Query(queryString, &email)
 
@@ -223,7 +227,7 @@ func (s *UserService) GetInvitation(email string) ([]model.Invitation, error) {
 	for row.Next() {
 		var invite model.Invitation
 
-		if err := row.Scan(&invite.Id, &invite.TeamId, &invite.TeamName, &invite.Message, &invite.IsRead, &invite.RecipientEmail, &invite.SenderName, &invite.SenderEmail, &invite.IsArchive); err != nil {
+		if err := row.Scan(&invite.Id, &invite.TeamId, &invite.TeamName, &invite.Message, &invite.IsRead, &invite.RecipientEmail, &invite.SenderName, &invite.SenderEmail, &invite.IsArchive,&invite.Role,&invite.Timestamp,&invite.Status,&invite.SenderAvatar); err != nil {
 			return []model.Invitation{}, err
 		}
 
@@ -303,9 +307,9 @@ func (s *UserService) CreateStaff(staff model.Staff) (model.Staff, error) {
 
 	var result model.Staff
 
-	queryString := "INSERT INTO staff(user_id,team_id) VALUES($1,$2) RETURNING staff_id"
+	queryString := "INSERT INTO staff(user_id,team_id,role,firstname,lastname,email) VALUES($1,$2,$3,$4,$5,$6) RETURNING staff_id"
 
-	err := s.db.QueryRow(queryString, &staff.User_id, &staff.Team_id).Scan(&result.Staff_id)
+	err := s.db.QueryRow(queryString, &staff.User_id, &staff.Team_id,&staff.Role,&staff.FirstName,&staff.LastName,&staff.Email).Scan(&result.Staff_id)
 
 	if err != nil {
 
@@ -313,4 +317,44 @@ func (s *UserService) CreateStaff(staff model.Staff) (model.Staff, error) {
 	}
 
 	return result, nil
+}
+
+func (s *UserService) UpdateEmail(id string, code int) (bool, error) {
+
+	queryString := "UPDATE mail_code SET code = $1 WHERE id = $2"
+
+	result, err := s.db.Exec(queryString, id, code)
+
+	if err != nil {
+		return false, fmt.Errorf("query error: %v",err)
+	}
+
+	rowAff, err := result.RowsAffected()
+
+	if err != nil {
+		return false, fmt.Errorf("rowAffected error: %v",err)
+	}
+
+	return rowAff == 1, nil
+}
+
+
+func (s *UserService) AssignRole(userId string,roleId int) (bool,error) {
+
+	
+	queryString := "INSERT INTO user_role(user_id,role_id) VALUES ($1,$2) RETURNING user_id"
+
+	result,err := s.db.Exec(queryString,&userId,&roleId)
+
+	if err != nil {
+		return false,fmt.Errorf("query error %v",err)
+	}
+
+	rowAff,err := result.RowsAffected()
+
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	return rowAff > 0 ,nil
 }

@@ -339,7 +339,7 @@ func (s *UserService) UpdateEmail(id string, code int) (bool, error) {
 }
 
 
-func (s *UserService) AssignRole(userId string,roleId int) (bool,error) {
+func (s *UserService) AssignRole(userId uuid.UUID,roleId int) (bool,error) {
 
 	
 	queryString := "INSERT INTO user_role(user_id,role_id) VALUES ($1,$2) RETURNING user_id"
@@ -357,4 +357,25 @@ func (s *UserService) AssignRole(userId string,roleId int) (bool,error) {
 	}
 
 	return rowAff > 0 ,nil
+}
+
+func (s *UserService) HasAcess(userEmail string ,accesName string) bool {
+	var count int
+
+
+	queryString := `SELECT COUNT(*)
+	FROM users u
+	JOIN user_role ur ON u.user_id = ur.user_id
+	JOIN role_access ra ON ur.role_id = ra.role_id
+	JOIN acesss a ON ra.role_id = a.role_id
+	WHERE u.email = $1 AND a.access_name = $2
+	`
+
+	err := s.db.QueryRow(queryString,&userEmail,&accesName).Scan(&count)
+
+	if err != nil{
+		return false
+	}
+
+	return  count > 0
 }
